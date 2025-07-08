@@ -1,6 +1,7 @@
 package com.shaeed.fcmclient.myui
 
 import android.content.ContentValues.TAG
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -35,13 +36,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.messaging.FirebaseMessaging
+import com.shaeed.fcmclient.RetrofitClient
+import com.shaeed.fcmclient.data.PostRequest
+import com.shaeed.fcmclient.data.PostResponse
 import com.shaeed.fcmclient.data.PrefKeys
 import com.shaeed.fcmclient.data.SharedPreferences
+import retrofit2.Call
+import retrofit2.Response
+import retrofit2.Callback
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FcmTokenScreen(navController: NavController) {
     val token = getFCMToken()
+    var serverResponse by remember { mutableStateOf("") }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -113,9 +121,22 @@ fun FcmTokenScreen(navController: NavController) {
                 SharedPreferences().saveKeyValue(context, PrefKeys.IP_ADDRESS, ipAddress)
                 SharedPreferences().saveKeyValue(context, PrefKeys.SIP_SERVER_USER, userName)
                 SharedPreferences().saveKeyValue(context, PrefKeys.SIP_SERVER_PASS, userPass)
+                uploadFCMToServer(ipAddress, userName, userPass, token) { result ->
+                    Log.d("Result", result)
+                    serverResponse = result
+                }
             }) {
                 Text("Connect")
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = serverResponse,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+            )
         }
     }
 }
@@ -133,3 +154,29 @@ fun getFCMToken(): String {
     Log.d(TAG, "FCM Token: $token")
     return token
 }
+
+fun uploadFCMToServer(server: String, userName: String, userPass: String, fcmToken: String, onResult: (String) -> Unit) {
+    val deviceId = "${Build.MANUFACTURER} ${Build.MODEL}"
+    val request = PostRequest(deviceId, userName, userPass, fcmToken)
+    val url = "http://$server/sip/client/register"
+    Log.d("FcmTokenScreen", "URL to upload FCM: $url")
+
+    RetrofitClient.apiService.createPost(url, request)
+        .enqueue(object : Callback<PostResponse> {
+            override fun onResponse(call: Call<PostResponse>, response: Response<PostResponse>) {
+                val result = if (response.isSuccessful) {
+                    "Success! Device registered on server."
+                } else {
+                    "Error: ${response.code()}"
+                }
+                onResult(result)
+            }
+
+            override fun onFailure(call: Call<PostResponse>, t: Throwable) {
+                val result = "Failure: ${t.message}"
+                Log.e("TokenSave", result)
+                onResult(result)
+            }
+        })
+}
+

@@ -64,7 +64,7 @@ class MyFirebaseService : FirebaseMessagingService() {
     }
 
     private fun showIncomingSmsNotification(data: Map<String, String>) {
-        val from = data["from"] ?: "Unknown"
+        val from = data["phone_number"] ?: "Unknown"
         val body = data["body"] ?: ""
 
         // Update your UI ViewModel (if visible)
