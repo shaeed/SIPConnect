@@ -32,6 +32,7 @@ class MyFirebaseService : FirebaseMessagingService() {
         Log.d("Notification", data.toString())
         when (data["type"]) {
             "call" -> showIncomingCallNotification(applicationContext, data["phone_number"])
+            "missed-call" -> showMissedCallNotification(data)
             "sms" -> showIncomingSmsNotification(data)
             else -> Log.w("FCM", "Unknown notification type: ${data["type"]}")
         }
@@ -63,14 +64,41 @@ class MyFirebaseService : FirebaseMessagingService() {
         }, 1000)
     }
 
+    private fun showMissedCallNotification(data: Map<String, String>) {
+        val from = data["phone_number"] ?: "Unknown"
+        addCallerToDb(from, "missed")
+
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("destination", "callHistory")
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(this, "default_channel_id")
+            .setSmallIcon(android.R.drawable.sym_call_missed)
+            .setContentTitle("Missed call")
+            .setContentText("From $from")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("From $from"))
+            .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(Random.nextInt(), notification)
+    }
+
     private fun showIncomingSmsNotification(data: Map<String, String>) {
         val from = data["phone_number"] ?: "Unknown"
         val body = data["body"] ?: ""
-
-        // Update your UI ViewModel (if visible)
         addSmsToDb(from, body)
 
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("destination", "smsHistory")
+        }
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
@@ -98,6 +126,18 @@ class MyFirebaseService : FirebaseMessagingService() {
                 timestamp = System.currentTimeMillis(),
             )
             db.smsLogDao().insert(smsLog)
+        }
+    }
+
+    fun addCallerToDb(phoneNumber: String, status: String){
+        CoroutineScope(Dispatchers.IO).launch {
+            val db = AppDatabase.getDatabase(applicationContext)
+            val callLog = CallLog(
+                phoneNumber = phoneNumber,
+                timestamp = System.currentTimeMillis(),
+                status = status // missed or "received"
+            )
+            db.callLogDao().insert(callLog)
         }
     }
 }
