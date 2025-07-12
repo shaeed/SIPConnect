@@ -29,7 +29,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity
+            android:name=".myui.IncomingCallActivity"
+            android:theme="@style/Theme.Transparent"/>
         <service
             android:name=".MyFirebaseService"
             android:exported="false">
@@ -37,10 +39,6 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service
-            android:name=".CallForegroundService"
-            android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
     </application>
     <queries>
         <package android:name="com.zoiper.android.app" />
