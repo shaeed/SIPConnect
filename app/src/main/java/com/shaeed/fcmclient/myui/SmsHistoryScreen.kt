@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.shaeed.fcmclient.data.AppDatabase
+import com.shaeed.fcmclient.getContactName
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -59,8 +60,9 @@ fun SmsHistoryScreen(navController: NavController) {
         ) {
             items(smsLogs) { sms ->
                 Column(modifier = Modifier.padding(8.dp)) {
+                    val contactName = getContactName(context, sms.from) ?: sms.from
                     Text(
-                        text = "From: ${sms.from}",
+                        text = "From: $contactName",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

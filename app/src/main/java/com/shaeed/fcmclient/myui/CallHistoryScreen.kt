@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.shaeed.fcmclient.data.AppDatabase
+import com.shaeed.fcmclient.getContactName
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -76,8 +77,9 @@ fun CallHistoryScreen(navController: NavController) {
 @Composable
 fun PhoneNumberItem(status: String, phoneNumber: String) {
     val context = LocalContext.current
+    val contactName = getContactName(context, phoneNumber) ?: phoneNumber
     Text(
-        text = "${status}: $phoneNumber",
+        text = "${status}: $contactName",
         modifier = Modifier.clickable {
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("Phone Number", phoneNumber)

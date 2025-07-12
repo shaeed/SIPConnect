@@ -16,17 +16,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.findNavController
 import com.shaeed.fcmclient.myui.CallHistoryScreen
 import com.shaeed.fcmclient.myui.FcmTokenScreen
 import com.shaeed.fcmclient.myui.MainScreen
@@ -67,6 +63,7 @@ class MainActivity : ComponentActivity() {
             }
             CreateCallNotificationChannel()
             RequestNotificationPermissionIfNeeded()
+            requestContactPermission(this)
         }
     }
 

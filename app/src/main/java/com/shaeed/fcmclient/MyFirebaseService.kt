@@ -70,10 +70,11 @@ class MyFirebaseService : FirebaseMessagingService() {
             this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val contactName = getContactName(applicationContext, from) ?: from
         val notification = NotificationCompat.Builder(this, "incoming_call_channel")
             .setSmallIcon(android.R.drawable.sym_call_incoming)
             .setContentTitle("Incoming Call")
-            .setContentText("From $from. Tap to open ZoiPer")
+            .setContentText("From $contactName. Tap to open ZoiPer")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setContentIntent(pendingIntent)
@@ -97,11 +98,12 @@ class MyFirebaseService : FirebaseMessagingService() {
             this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        val contactName = getContactName(applicationContext, from) ?: from
         val notification = NotificationCompat.Builder(this, "default_channel_id")
             .setSmallIcon(android.R.drawable.sym_call_missed)
             .setContentTitle("Missed call")
-            .setContentText("From $from")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("From $from"))
+            .setContentText("From $contactName")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("From $contactName"))
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
@@ -124,9 +126,10 @@ class MyFirebaseService : FirebaseMessagingService() {
             this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        val contactName = getContactName(applicationContext, from) ?: from
         val notification = NotificationCompat.Builder(this, "sms_channel")
             .setSmallIcon(android.R.drawable.sym_action_email)
-            .setContentTitle("SMS from $from")
+            .setContentTitle("SMS from $contactName")
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(pendingIntent)

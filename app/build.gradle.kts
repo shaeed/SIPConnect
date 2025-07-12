@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose.v277)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+    implementation(libs.libphonenumber)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
