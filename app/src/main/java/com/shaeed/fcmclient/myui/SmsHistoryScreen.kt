@@ -29,12 +29,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.shaeed.fcmclient.ContactHelper.normalizeNumber
+import com.shaeed.fcmclient.ContactViewModel
+import com.shaeed.fcmclient.ContactViewModelFactory
 import com.shaeed.fcmclient.data.AppDatabase
-import com.shaeed.fcmclient.getContactName
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.collections.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +46,7 @@ fun SmsHistoryScreen(navController: NavController) {
     val context = LocalContext.current
     val dao = remember { AppDatabase.getDatabase(context).smsLogDao() }
     val smsLogs by dao.getAll().collectAsState(initial = emptyList())
+    val viewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(context))
 
     Scaffold(
         topBar = {
@@ -60,7 +65,9 @@ fun SmsHistoryScreen(navController: NavController) {
         ) {
             items(smsLogs) { sms ->
                 Column(modifier = Modifier.padding(8.dp)) {
-                    val contactName = getContactName(context, sms.from) ?: sms.from
+                    val phonebook by viewModel.phonebook.collectAsState()
+                    val normalized = normalizeNumber(sms.from)
+                    val contactName = phonebook[normalized] ?: sms.from
                     Text(
                         text = "From: $contactName",
                         style = MaterialTheme.typography.titleMedium,

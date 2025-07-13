@@ -21,6 +21,7 @@ import com.shaeed.fcmclient.myui.IncomingCallActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 class MyFirebaseService : FirebaseMessagingService() {
@@ -70,7 +71,9 @@ class MyFirebaseService : FirebaseMessagingService() {
             this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val contactName = getContactName(applicationContext, from) ?: from
+        val contactName = runBlocking {
+            ContactHelper.getContactName(applicationContext, from)
+        }
         val notification = NotificationCompat.Builder(this, "incoming_call_channel")
             .setSmallIcon(android.R.drawable.sym_call_incoming)
             .setContentTitle("Incoming Call")
@@ -98,7 +101,9 @@ class MyFirebaseService : FirebaseMessagingService() {
             this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val contactName = getContactName(applicationContext, from) ?: from
+        val contactName = runBlocking {
+            ContactHelper.getContactName(applicationContext, from)
+        }
         val notification = NotificationCompat.Builder(this, "default_channel_id")
             .setSmallIcon(android.R.drawable.sym_call_missed)
             .setContentTitle("Missed call")
@@ -126,7 +131,9 @@ class MyFirebaseService : FirebaseMessagingService() {
             this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val contactName = getContactName(applicationContext, from) ?: from
+        val contactName = runBlocking {
+            ContactHelper.getContactName(applicationContext, from)
+        }
         val notification = NotificationCompat.Builder(this, "sms_channel")
             .setSmallIcon(android.R.drawable.sym_action_email)
             .setContentTitle("SMS from $contactName")

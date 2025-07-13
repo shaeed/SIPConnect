@@ -28,9 +28,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.shaeed.fcmclient.ContactHelper.normalizeNumber
+import com.shaeed.fcmclient.ContactViewModel
+import com.shaeed.fcmclient.ContactViewModelFactory
 import com.shaeed.fcmclient.data.AppDatabase
-import com.shaeed.fcmclient.getContactName
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -41,6 +44,7 @@ fun CallHistoryScreen(navController: NavController) {
     val context = LocalContext.current
     val dao = remember { AppDatabase.getDatabase(context).callLogDao() }
     val callLogs by dao.getAll().collectAsState(initial = emptyList())
+    val viewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(context))
 
     Scaffold(
         topBar = {
@@ -59,9 +63,7 @@ fun CallHistoryScreen(navController: NavController) {
         ) {
             items(callLogs) { log ->
                 Column(modifier = Modifier.padding(8.dp)) {
-                    PhoneNumberItem(log.status, log.phoneNumber)
-                    //Text("${SimpleDateFormat("EEE dd MMM HH:mm:ss", Locale.getDefault()).format(Date(log.timestamp))}")
-                    //HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
+                    PhoneNumberItem(log.status, log.phoneNumber,viewModel)
                     Text(
                         text = SimpleDateFormat("EEE dd MMM HH:mm:ss", Locale.getDefault()).format(Date(log.timestamp)),
                         style = MaterialTheme.typography.bodySmall,
@@ -75,9 +77,12 @@ fun CallHistoryScreen(navController: NavController) {
 }
 
 @Composable
-fun PhoneNumberItem(status: String, phoneNumber: String) {
+fun PhoneNumberItem(status: String, phoneNumber: String, viewModel: ContactViewModel) {
     val context = LocalContext.current
-    val contactName = getContactName(context, phoneNumber) ?: phoneNumber
+    // val contactName = viewModel.getContactName(phoneNumber)
+    val phonebook by viewModel.phonebook.collectAsState()
+    val normalized = normalizeNumber(phoneNumber)
+    val contactName = phonebook[normalized] ?: phoneNumber
     Text(
         text = "${status}: $contactName",
         modifier = Modifier.clickable {
