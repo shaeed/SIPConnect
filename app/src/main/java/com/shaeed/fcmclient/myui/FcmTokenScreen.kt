@@ -103,7 +103,7 @@ fun FcmTokenScreen(navController: NavController) {
             TextField(
                 value = userName,
                 onValueChange = { it -> userName = it },
-                label = { Text("User Name") },
+                label = { Text("SIP User Name") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -112,7 +112,7 @@ fun FcmTokenScreen(navController: NavController) {
             TextField(
                 value = userPass,
                 onValueChange = { it -> userPass = it },
-                label = { Text("Password") },
+                label = { Text("Re-use") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -157,7 +157,7 @@ fun getFCMToken(): String {
 
 fun uploadFCMToServer(server: String, userName: String, userPass: String, fcmToken: String, onResult: (String) -> Unit) {
     val deviceId = "${Build.MANUFACTURER} ${Build.MODEL}"
-    val request = PostRequest(deviceId, userName, userPass, fcmToken)
+    val request = PostRequest(deviceId, userName, fcmToken)
     val url = "http://$server/sip/client/register"
     Log.d("FcmTokenScreen", "URL to upload FCM: $url")
 
@@ -167,7 +167,7 @@ fun uploadFCMToServer(server: String, userName: String, userPass: String, fcmTok
                 val result = if (response.isSuccessful) {
                     "Success! Device registered on server."
                 } else {
-                    "Error: ${response.code()}"
+                    "Error code: ${response.code()}. ${response.body()}"
                 }
                 onResult(result)
             }
@@ -179,4 +179,3 @@ fun uploadFCMToServer(server: String, userName: String, userPass: String, fcmTok
             }
         })
 }
-
