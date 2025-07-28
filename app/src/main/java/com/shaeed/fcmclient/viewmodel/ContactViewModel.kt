@@ -1,12 +1,9 @@
-package com.shaeed.fcmclient
+package com.shaeed.fcmclient.viewmodel
 
 import android.content.Context
-import android.provider.ContactsContract
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.i18n.phonenumbers.NumberParseException
-import com.google.i18n.phonenumbers.PhoneNumberUtil
-import kotlinx.coroutines.Dispatchers
+import com.shaeed.fcmclient.util.ContactHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

@@ -37,8 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.messaging.FirebaseMessaging
 import com.shaeed.fcmclient.RetrofitClient
-import com.shaeed.fcmclient.data.PostRequest
-import com.shaeed.fcmclient.data.PostResponse
+import com.shaeed.fcmclient.network.PostRequest
+import com.shaeed.fcmclient.network.PostResponse
 import com.shaeed.fcmclient.data.PrefKeys
 import com.shaeed.fcmclient.data.SharedPreferences
 import retrofit2.Call

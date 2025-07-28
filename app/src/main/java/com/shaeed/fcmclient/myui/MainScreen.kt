@@ -34,6 +34,10 @@ fun MainScreen(navController: NavController) {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = { navController.navigate("smsHistory") }) {
+            Text("SMS History")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = { navController.navigate("inbox") }) {
             Text("SMS")
         }
         Spacer(modifier = Modifier.height(16.dp))

@@ -1,4 +1,4 @@
-package com.shaeed.fcmclient
+package com.shaeed.fcmclient.viewmodel
 
 import android.content.Context
 import androidx.lifecycle.ViewModel

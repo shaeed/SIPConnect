@@ -31,9 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.shaeed.fcmclient.ContactHelper.normalizeNumber
-import com.shaeed.fcmclient.ContactViewModel
-import com.shaeed.fcmclient.ContactViewModelFactory
+import com.shaeed.fcmclient.util.ContactHelper.normalizeNumber
+import com.shaeed.fcmclient.viewmodel.ContactViewModel
+import com.shaeed.fcmclient.viewmodel.ContactViewModelFactory
 import com.shaeed.fcmclient.data.AppDatabase
 import java.text.SimpleDateFormat
 import java.util.Date

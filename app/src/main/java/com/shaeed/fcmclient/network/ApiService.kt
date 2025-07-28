@@ -1,7 +1,5 @@
-package com.shaeed.fcmclient
+package com.shaeed.fcmclient.network
 
-import com.shaeed.fcmclient.data.PostRequest
-import com.shaeed.fcmclient.data.PostResponse
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.POST
