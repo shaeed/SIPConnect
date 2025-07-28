@@ -1,38 +1,41 @@
 package com.shaeed.fcmclient
 
-import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.RingtoneManager
-import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.shaeed.fcmclient.myui.CallHistoryScreen
+import com.shaeed.fcmclient.myui.ConversationScreen
 import com.shaeed.fcmclient.myui.FcmTokenScreen
+import com.shaeed.fcmclient.myui.InboxScreen
 import com.shaeed.fcmclient.myui.MainScreen
 import com.shaeed.fcmclient.myui.SmsHistoryScreen
+import com.shaeed.fcmclient.sms.DefaultSmsHelper
 import com.shaeed.fcmclient.ui.theme.SIPConnectTheme
+import com.shaeed.fcmclient.util.PermissionsHelper
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        createNotificationChannels(this)
+
+        if (!DefaultSmsHelper.isDefaultSmsApp(this)) {
+            DefaultSmsHelper.requestDefaultSmsApp(this)
+        }
 
         setContent {
             SIPConnectTheme {
@@ -56,14 +59,22 @@ class MainActivity : ComponentActivity() {
                     composable("smsHistory") {
                         SmsHistoryScreen(navController)
                     }
+                    composable("inbox") {
+                        InboxScreen(navController)
+                    }
+                    composable(
+                        "conversation/{contact}",
+                        arguments = listOf(navArgument("contact") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val contact = backStackEntry.arguments?.getString("contact")!!
+                        ConversationScreen(navController, contact)
+                    }
                     composable("fcmToken") {
                         FcmTokenScreen(navController)
                     }
                 }
             }
-            CreateCallNotificationChannel()
-            RequestNotificationPermissionIfNeeded()
-            requestContactPermission(this)
+            PermissionsHelper.RequestAllPermissionsIfNeeded()
         }
     }
 
@@ -73,11 +84,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun CreateCallNotificationChannel() {
-    // Create notification channel for Android 8.0+
-    val nm = LocalContext.current.getSystemService(NotificationManager::class.java)
+fun createNotificationChannels(context: Context) {
+    val nm = context.getSystemService(NotificationManager::class.java)
     val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+
     val channel = NotificationChannel(
         "incoming_call_channel",
         "Incoming Calls",
@@ -121,30 +131,4 @@ fun CreateCallNotificationChannel() {
         lockscreenVisibility = Notification.VISIBILITY_PUBLIC
     }
     nm.createNotificationChannel(defaultChannel)
-}
-
-@Composable
-fun RequestNotificationPermissionIfNeeded() {
-    val context = LocalContext.current
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            Toast.makeText(context, "Notifications enabled", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, "Notifications denied", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
-    }
 }

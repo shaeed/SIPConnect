@@ -1,4 +1,4 @@
-package com.shaeed.fcmclient.data
+package com.shaeed.fcmclient.network
 
 data class PostRequest(val device_id: String, val sip_user: String, val fcm_token: String)
 

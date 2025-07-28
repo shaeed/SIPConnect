@@ -7,11 +7,11 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [CallLog::class, SmsLog::class], version = 2)
+@Database(entities = [CallLog::class, SmsLog::class, MessageEntity::class], version = 4)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun callLogDao(): CallLogDao
     abstract fun smsLogDao(): SmsLogDao
-
+    abstract fun messageDao(): MessageDao
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
 
@@ -21,7 +21,11 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "call_log_db"
-                ).addMigrations(MIGRATION_1_2).build()
+                )
+                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_2_3)
+                    .fallbackToDestructiveMigration(true)
+                    .build()
                 INSTANCE = instance
                 instance
             }
@@ -35,6 +39,20 @@ abstract class AppDatabase : RoomDatabase() {
                 `from` TEXT NOT NULL,
                 `body` TEXT NOT NULL,
                 `timestamp` INTEGER NOT NULL
+            )
+        """.trimIndent())
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `messages` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `sender` TEXT NOT NULL,
+                `body` TEXT NOT NULL,
+                `timestamp` INTEGER NOT NULL,
+                `type` TEXT NOT NULL
             )
         """.trimIndent())
             }

@@ -1,19 +1,13 @@
-package com.shaeed.fcmclient
+package com.shaeed.fcmclient.util
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
-import android.net.Uri
 import android.provider.ContactsContract
-import androidx.activity.ComponentActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 object ContactHelper {
 
@@ -24,13 +18,13 @@ object ContactHelper {
     @Volatile
     var phonebookCache: Map<String, String>? = null
 
-    fun normalizeNumber(rawNumber: String, defaultRegion: String = "IN"): String? {
+    fun normalizeNumber(rawNumber: String, defaultRegion: String = "IN"): String {
         val phoneUtil = PhoneNumberUtil.getInstance()
         return try {
             val numberProto = phoneUtil.parse(rawNumber, defaultRegion)
             phoneUtil.format(numberProto, PhoneNumberUtil.PhoneNumberFormat.E164)
         } catch (e: NumberParseException) {
-            null
+            rawNumber
         }
     }
 
@@ -89,18 +83,5 @@ object ContactHelper {
     fun getContactNameFromCache(phoneNumber: String): String? {
         val normalized = normalizeNumber(phoneNumber)
         return phonebookCache?.get(normalized)
-    }
-}
-
-
-fun requestContactPermission(activity: ComponentActivity){
-    if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_CONTACTS)
-        != PackageManager.PERMISSION_GRANTED) {
-
-        ActivityCompat.requestPermissions(
-            activity,
-            arrayOf(Manifest.permission.READ_CONTACTS),
-            1001
-        )
     }
 }
