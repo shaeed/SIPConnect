@@ -29,6 +29,12 @@ interface MessageDao {
     @Query("UPDATE messages SET read = 1 WHERE senderNormalized = :senderNormalized")
     suspend fun markAsRead(senderNormalized: String)
 
+    @Query("DELETE FROM messages WHERE senderNormalized = :senderNormalized")
+    suspend fun deleteMessages(senderNormalized: String)
+
+    @Query("DELETE FROM messages WHERE id = :id")
+    suspend fun deleteMessage(id: Long)
+
     @Query("UPDATE messages SET starred = :isStarred WHERE id = :messageId")
     suspend fun starMessage(messageId: Long, isStarred: Boolean)
 

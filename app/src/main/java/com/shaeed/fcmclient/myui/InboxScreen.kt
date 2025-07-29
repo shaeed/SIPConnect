@@ -1,7 +1,7 @@
 package com.shaeed.fcmclient.myui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -25,10 +26,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,7 +48,6 @@ import com.shaeed.fcmclient.data.MessageEntity
 import com.shaeed.fcmclient.util.UtilFunctions.formatTimestamp
 import com.shaeed.fcmclient.viewmodel.ContactViewModel
 import com.shaeed.fcmclient.viewmodel.ContactViewModelFactory
-import kotlin.collections.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,10 +75,32 @@ fun InboxScreen(navController: NavController, viewModel: InboxViewModel = viewMo
             items(conversations) { convo ->
                 val phonebook by contactViewModel.phonebook.collectAsState()
                 val contactName = phonebook[convo.senderNormalized] ?: convo.sender
-                ConversationListItem(convo, contactName) {
-                    navController.navigate("conversation/${convo.senderNormalized}")
-                }
+                var showDialog by remember { mutableStateOf(false) }
+
+                ConversationListItem(
+                    convo,
+                    contactName,
+                    onClick = { navController.navigate("conversation/${convo.senderNormalized}") },
+                    onLongPress = { showDialog = true }
+                )
                 HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
+
+                if (showDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDialog = false },
+                        title = { Text("Delete Conversation") },
+                        text = { Text("Are you sure you want to delete all messages with $contactName?") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                viewModel.deleteMessages(convo.senderNormalized)
+                                showDialog = false
+                            }) { Text("Delete") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDialog = false }) { Text("Cancel") }
+                        }
+                    )
+                }
             }
         }
     }
@@ -84,12 +110,16 @@ fun InboxScreen(navController: NavController, viewModel: InboxViewModel = viewMo
 fun ConversationListItem(
     convo: MessageEntity,
     contactName: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongPress: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .combinedClickable (
+                onClick = { onClick() },
+                onLongClick = { onLongPress() }
+            )
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         // Circle with sender's initial

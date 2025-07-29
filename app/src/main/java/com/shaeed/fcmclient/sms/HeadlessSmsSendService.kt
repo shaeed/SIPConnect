@@ -14,6 +14,8 @@ class HeadlessSmsSendService : Service() {
         private const val ACTION_RESPOND_VIA_MESSAGE = "android.intent.action.RESPOND_VIA_MESSAGE"
     }
 
+    override fun onBind(intent: Intent?): IBinder? = null
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Service started with intent: $intent")
 
@@ -43,9 +45,5 @@ class HeadlessSmsSendService : Service() {
 
         stopSelf()
         return START_NOT_STICKY
-    }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
     }
 }

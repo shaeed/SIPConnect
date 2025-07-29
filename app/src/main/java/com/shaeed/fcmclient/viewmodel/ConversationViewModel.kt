@@ -19,7 +19,11 @@ class ConversationViewModel(app: Application) : AndroidViewModel(app) {
         SmsSender.send(getApplication(), to, body)
     }
 
-    fun markAsRead(senderNormalized: String){
+    fun markAsRead(senderNormalized: String) {
         viewModelScope.launch { dao.markAsRead(senderNormalized) }
+    }
+
+    fun deleteMessage(id: Long) {
+        viewModelScope.launch { dao.deleteMessage(id) }
     }
 }
