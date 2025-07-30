@@ -1,7 +1,6 @@
 package com.shaeed.fcmclient.myui
 
 import android.content.ContentValues.TAG
-import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -36,14 +35,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.messaging.FirebaseMessaging
-import com.shaeed.fcmclient.RetrofitClient
-import com.shaeed.fcmclient.network.PostRequest
-import com.shaeed.fcmclient.network.PostResponse
+import com.shaeed.fcmclient.network.RetrofitClient
 import com.shaeed.fcmclient.data.PrefKeys
 import com.shaeed.fcmclient.data.SharedPreferences
-import retrofit2.Call
-import retrofit2.Response
-import retrofit2.Callback
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,7 +84,7 @@ fun FcmTokenScreen(navController: NavController) {
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            var ipAddress by remember { mutableStateOf(SharedPreferences().getKeyValue(context, PrefKeys.IP_ADDRESS)) }
+            var ipAddress by remember { mutableStateOf(SharedPreferences.getKeyValue(context, PrefKeys.IP_ADDRESS)) }
             TextField(
                 value = ipAddress,
                 onValueChange = { it -> ipAddress = it },
@@ -99,7 +93,7 @@ fun FcmTokenScreen(navController: NavController) {
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            var userName by remember { mutableStateOf(SharedPreferences().getKeyValue(context, PrefKeys.SIP_SERVER_USER)) }
+            var userName by remember { mutableStateOf(SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER)) }
             TextField(
                 value = userName,
                 onValueChange = { it -> userName = it },
@@ -108,7 +102,7 @@ fun FcmTokenScreen(navController: NavController) {
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            var userPass by remember { mutableStateOf(SharedPreferences().getKeyValue(context, PrefKeys.SIP_SERVER_PASS)) }
+            var userPass by remember { mutableStateOf(SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_PASS)) }
             TextField(
                 value = userPass,
                 onValueChange = { it -> userPass = it },
@@ -118,10 +112,10 @@ fun FcmTokenScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = {
-                SharedPreferences().saveKeyValue(context, PrefKeys.IP_ADDRESS, ipAddress)
-                SharedPreferences().saveKeyValue(context, PrefKeys.SIP_SERVER_USER, userName)
-                SharedPreferences().saveKeyValue(context, PrefKeys.SIP_SERVER_PASS, userPass)
-                uploadFCMToServer(ipAddress, userName, userPass, token) { result ->
+                SharedPreferences.saveKeyValue(context, PrefKeys.IP_ADDRESS, ipAddress)
+                SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_USER, userName)
+                SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_PASS, userPass)
+                RetrofitClient.uploadFCMToServer(context, token) { result ->
                     Log.d("Result", result)
                     serverResponse = result
                 }
@@ -153,29 +147,4 @@ fun getFCMToken(): String {
 
     Log.d(TAG, "FCM Token: $token")
     return token
-}
-
-fun uploadFCMToServer(server: String, userName: String, userPass: String, fcmToken: String, onResult: (String) -> Unit) {
-    val deviceId = "${Build.MANUFACTURER} ${Build.MODEL}"
-    val request = PostRequest(deviceId, userName, fcmToken)
-    val url = "http://$server/sip/client/register"
-    Log.d("FcmTokenScreen", "URL to upload FCM: $url")
-
-    RetrofitClient.apiService.createPost(url, request)
-        .enqueue(object : Callback<PostResponse> {
-            override fun onResponse(call: Call<PostResponse>, response: Response<PostResponse>) {
-                val result = if (response.isSuccessful) {
-                    "Success! Device registered on server."
-                } else {
-                    "Error code: ${response.code()}. ${response.body()}"
-                }
-                onResult(result)
-            }
-
-            override fun onFailure(call: Call<PostResponse>, t: Throwable) {
-                val result = "Failure: ${t.message}"
-                Log.e("TokenSave", result)
-                onResult(result)
-            }
-        })
 }

@@ -7,5 +7,11 @@ import retrofit2.http.Url
 
 interface ApiService {
     @POST()
-    fun createPost(@Url url: String, @Body request: PostRequest): Call<PostResponse>
+    fun registerDeviceOnServer(@Url url: String, @Body request: RegisterDevice): Call<PostResponse>
+
+    @POST()
+    fun smsAlert(@Url url: String, @Body request: SmsAlert): Call<PostResponse>
+
+    @POST()
+    fun sendGsmSms(@Url url: String, @Body request: SmsAlert): Call<PostResponse>
 }

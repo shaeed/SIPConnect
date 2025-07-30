@@ -14,7 +14,7 @@ class IncomingCallActivity: AppCompatActivity() {
 
         // Get data from the Intent
         val from = intent.getStringExtra("from") ?: "Unknown"
-        addCallerToDb(from, "Received", applicationContext)
+        addCallerToDb(from, "Incoming", applicationContext)
 
         // launch ZoiPer
         val packageName = "com.zoiper.android.app"

@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [CallLog::class, SmsLog::class, MessageEntity::class], version = 4)
+@Database(entities = [CallLog::class, SmsLog::class, MessageEntity::class], version = 5)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun callLogDao(): CallLogDao
     abstract fun smsLogDao(): SmsLogDao

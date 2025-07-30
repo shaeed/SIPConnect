@@ -3,14 +3,23 @@ package com.shaeed.fcmclient.myui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.CallMade
+import androidx.compose.material.icons.automirrored.filled.CallMissed
+import androidx.compose.material.icons.automirrored.filled.CallReceived
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -18,33 +27,44 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.shaeed.fcmclient.util.ContactHelper.normalizeNumber
 import com.shaeed.fcmclient.viewmodel.ContactViewModel
 import com.shaeed.fcmclient.viewmodel.ContactViewModelFactory
 import com.shaeed.fcmclient.data.AppDatabase
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.shaeed.fcmclient.data.CallLog
+import com.shaeed.fcmclient.util.UtilFunctions.formatTimestamp
+import com.shaeed.fcmclient.viewmodel.CallViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CallHistoryScreen(navController: NavController) {
+fun CallHistoryScreen(navController: NavController, callViewModel: CallViewModel = viewModel()) {
     val context = LocalContext.current
-    val dao = remember { AppDatabase.getDatabase(context).callLogDao() }
-    val callLogs by dao.getAll().collectAsState(initial = emptyList())
-    val viewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(context))
+    val callLogs by callViewModel.callLogs.collectAsState()
+    val contactViewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(context))
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        callViewModel.deleteOldCallLogs()
+    }
 
     Scaffold(
         topBar = {
@@ -56,40 +76,86 @@ fun CallHistoryScreen(navController: NavController) {
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.padding(innerPadding)
+            contentPadding = innerPadding,
+            modifier = Modifier.fillMaxSize()
         ) {
             items(callLogs) { log ->
-                Column(modifier = Modifier.padding(8.dp)) {
-                    PhoneNumberItem(log.status, log.phoneNumber,viewModel)
-                    Text(
-                        text = SimpleDateFormat("EEE dd MMM HH:mm:ss", Locale.getDefault()).format(Date(log.timestamp)),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                    HorizontalDivider(Modifier.padding(top = 8.dp), DividerDefaults.Thickness, DividerDefaults.color)
-                }
+                CallLogItem(log, contactViewModel, snackbarHostState)
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    thickness = DividerDefaults.Thickness,
+                    color = DividerDefaults.color
+                )
             }
         }
     }
 }
 
 @Composable
-fun PhoneNumberItem(status: String, phoneNumber: String, viewModel: ContactViewModel) {
+fun CallLogItem(
+    call: CallLog,
+    viewModel: ContactViewModel,
+    snackbarHostState: SnackbarHostState
+) {
     val context = LocalContext.current
-    // val contactName = viewModel.getContactName(phoneNumber)
     val phonebook by viewModel.phonebook.collectAsState()
-    val normalized = normalizeNumber(phoneNumber)
-    val contactName = phonebook[normalized] ?: phoneNumber
-    Text(
-        text = "${status}: $contactName",
-        modifier = Modifier.clickable {
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("Phone Number", phoneNumber)
-            clipboard.setPrimaryClip(clip)
-            Toast.makeText(context, "Phone number copied", Toast.LENGTH_SHORT).show()
+    val contactName = phonebook[call.normalizedNumber] ?: call.phoneNumber
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("Phone Number", call.phoneNumber)
+                clipboard.setPrimaryClip(clip)
+                // Modern feedback: Snackbar
+                CoroutineScope(Dispatchers.Main).launch {
+                    snackbarHostState.showSnackbar("Phone number copied")
+                }
+            }
+            .padding(vertical = 12.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = when (call.status) {
+                "Incoming" -> Icons.AutoMirrored.Filled.CallReceived
+                "Outgoing" -> Icons.AutoMirrored.Filled.CallMade
+                "Missed" -> Icons.AutoMirrored.Filled.CallMissed
+                else -> Icons.Filled.Phone
+            },
+            contentDescription = call.status,
+            tint = when (call.status) {
+                "Incoming" -> MaterialTheme.colorScheme.primary
+                "Outgoing" -> MaterialTheme.colorScheme.secondary
+                "Missed" -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurface
+            },
+            modifier = Modifier.size(32.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = contactName,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1
+            )
+            Text(
+                text = formatTimestamp(call.timestamp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-    )
+
+        Text(
+            text = call.status,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
 }

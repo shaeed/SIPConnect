@@ -13,4 +13,10 @@ interface CallLogDao {
 
     @Query("SELECT * FROM call_log ORDER BY timestamp DESC")
     fun getAll(): Flow<List<CallLog>>
+
+    @Query("DELETE FROM call_log WHERE timestamp < :threshold")
+    suspend fun deleteOlderThan(threshold: Long)
+
+    @Query("DELETE FROM call_log WHERE id = :id")
+    suspend fun deleteById(id: Long)
 }

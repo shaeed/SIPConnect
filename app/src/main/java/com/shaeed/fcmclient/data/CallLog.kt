@@ -7,6 +7,7 @@ import androidx.room.Entity
 data class CallLog(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val phoneNumber: String,
+    val normalizedNumber: String,
     val timestamp: Long,
-    val status: String // "missed", "received", etc.
+    val status: String // "Missed", "Incoming", "Outgoing" etc.
 )

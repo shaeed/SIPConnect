@@ -11,6 +11,7 @@ import android.telephony.SubscriptionManager
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.shaeed.fcmclient.data.SmsRepository
+import com.shaeed.fcmclient.network.RetrofitClient
 
 class SmsReceiver : BroadcastReceiver() {
     @SuppressLint("MissingPermission")
@@ -28,9 +29,13 @@ class SmsReceiver : BroadcastReceiver() {
                 val body = sms.displayMessageBody
                 val timestamp = sms.timestampMillis
 
-                SmsRepository.insertGsmMessage(context, sender, body, timestamp)
-                val slot = getSimSlot(context, subscriptionId)
-                Log.d("SmsReceiver", "subscriptionId: $subscriptionId. From: $sender Message: $body Slot: $slot")
+                //val slot = getSimSlot(context, subscriptionId)
+                Log.d("SmsReceiver", "subscriptionId: $subscriptionId. From: $sender Message: $body Slot: slot")
+
+                SmsRepository.insertGsmMessage(context, sender, body, timestamp, subscriptionId)
+                RetrofitClient.sendSmsAlert(context, sender, body) { result ->
+                    Log.d("SmsReceiver", result)
+                }
             }
         }
     }

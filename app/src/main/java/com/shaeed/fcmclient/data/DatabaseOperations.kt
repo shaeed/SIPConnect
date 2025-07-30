@@ -1,6 +1,7 @@
 package com.shaeed.fcmclient.data
 
 import android.content.Context
+import com.shaeed.fcmclient.util.ContactHelper.normalizeNumber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,11 +20,13 @@ fun addSmsToDb(from: String, body: String, applicationContext: Context){
 
 fun addCallerToDb(phoneNumber: String, status: String, applicationContext: Context){
     CoroutineScope(Dispatchers.IO).launch {
+        val normalizeNumber = normalizeNumber(phoneNumber)
         val db = AppDatabase.getDatabase(applicationContext)
         val callLog = CallLog(
             phoneNumber = phoneNumber,
+            normalizedNumber = normalizeNumber,
             timestamp = System.currentTimeMillis(),
-            status = status // missed or "received"
+            status = status // missed or Incoming
         )
         db.callLogDao().insert(callLog)
     }

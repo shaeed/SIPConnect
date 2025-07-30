@@ -4,25 +4,15 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.shaeed.fcmclient.data.AppDatabase
-import com.shaeed.fcmclient.data.CallLog
-import com.shaeed.fcmclient.data.SmsLog
 import com.shaeed.fcmclient.data.SmsRepository
 import com.shaeed.fcmclient.data.addCallerToDb
 import com.shaeed.fcmclient.data.addSmsToDb
 import com.shaeed.fcmclient.myui.IncomingCallActivity
 import com.shaeed.fcmclient.util.ContactHelper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
@@ -93,7 +83,7 @@ class MyFirebaseService : FirebaseMessagingService() {
 
     private fun showMissedCallNotification(data: Map<String, String>) {
         val from = data["phone_number"] ?: "Unknown"
-        addCallerToDb(from, "missed", applicationContext)
+        addCallerToDb(from, "Missed", applicationContext)
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
