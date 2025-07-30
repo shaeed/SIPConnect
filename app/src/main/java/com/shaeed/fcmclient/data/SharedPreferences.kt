@@ -10,7 +10,7 @@ object PrefKeys {
     const val SIP_SERVER_PASS = "sip_server_pass"
 }
 
-class SharedPreferences {
+object SharedPreferences {
     fun saveKeyValue(context: Context, key: String, value: String) {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         prefs.edit {

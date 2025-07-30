@@ -9,11 +9,13 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -40,11 +42,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.toClipEntry
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -145,7 +143,10 @@ fun ConversationScreen(
 }
 
 @Composable
-fun MessageBubble(message: MessageEntity, onLongPress: (MessageEntity) -> Unit) {
+fun MessageBubble(
+    message: MessageEntity,
+    onLongPress: (MessageEntity) -> Unit
+) {
     val isOutgoing = message.type == MessageType.OUTGOING
     val bubbleColor = if (isOutgoing)
         MaterialTheme.colorScheme.primary
@@ -178,7 +179,7 @@ fun MessageBubble(message: MessageEntity, onLongPress: (MessageEntity) -> Unit) 
                     shape = RoundedCornerShape(12.dp)
                 )
                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                .widthIn(max = 300.dp) // limit width on large screens
+                .widthIn(max = 300.dp)
         ) {
             Text(
                 text = message.body,
@@ -187,11 +188,28 @@ fun MessageBubble(message: MessageEntity, onLongPress: (MessageEntity) -> Unit) 
             )
         }
 
-        Text(
-            text = formatTimestamp(message.timestamp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-        )
+        ) {
+            Text(
+                text = formatTimestamp(message.timestamp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+            val simName = when (message.simId) {
+                0 -> "SIM 1"
+                1 -> "SIM 2"
+                10 -> "Firebase"
+                else -> "SIM ${message.simId}"
+            }
+            Text(
+                text = simName,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }

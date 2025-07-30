@@ -1,5 +1,6 @@
 package com.shaeed.fcmclient.util
 
+import android.os.Build
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -22,5 +23,10 @@ object UtilFunctions {
             val dateTimeFormat = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
             dateTimeFormat.format(Date(timestamp))
         }
+    }
+
+    fun getDeviceId(): String {
+        val deviceId = "${Build.MANUFACTURER} ${Build.MODEL}"
+        return deviceId
     }
 }

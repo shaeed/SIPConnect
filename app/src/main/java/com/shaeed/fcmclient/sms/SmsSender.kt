@@ -10,15 +10,16 @@ import android.telephony.SubscriptionManager
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.shaeed.fcmclient.data.SmsRepository
-import com.shaeed.fcmclient.network.RestApiClient
+import com.shaeed.fcmclient.network.RetrofitClient
 
 object SmsSender {
     fun send(context: Context, to: String, message: String) {
-        val smsManager = SmsManager.getDefault()
-        smsManager.sendTextMessage(to, null, message, null, null)
+        // val smsManager = SmsManager.getDefault()
+        // smsManager.sendTextMessage(to, null, message, null, null)
 
-        // RestApiClient.sendToBackend(to, message)
-
+        RetrofitClient.sendGsmSms(context, to, message){ result ->
+            Log.d("SmsSender", result)
+        }
         SmsRepository.insertOutgoingMessage(context, to, message, System.currentTimeMillis())
     }
 
