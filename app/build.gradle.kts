@@ -88,9 +88,10 @@ configurations.all {
 
 fun getGitCommitCount(): Int {
     val stdout = ByteArrayOutputStream()
-    exec {
+    project.exec {
         commandLine("git", "rev-list", "--count", "HEAD")
         standardOutput = stdout
     }
+
     return stdout.toString().trim().toInt()
 }
