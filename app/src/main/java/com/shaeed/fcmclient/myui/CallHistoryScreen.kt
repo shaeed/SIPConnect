@@ -138,7 +138,6 @@ fun CallLogItem(
         )
 
         Spacer(modifier = Modifier.width(16.dp))
-
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = contactName,

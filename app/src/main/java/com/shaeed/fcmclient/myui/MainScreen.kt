@@ -8,8 +8,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,7 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 @Composable
-fun MainScreen(navController: NavController) {
+fun MainScreenOld(navController: NavController) {
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center,
@@ -55,6 +66,86 @@ fun MainScreen(navController: NavController) {
                 .background(Color.LightGray)
                 .padding(8.dp)
                 .fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun MainScreen(navController: NavController) {
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                "📱 SIP Client Config App",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                ActionButton(
+                    label = "Call History",
+                    icon = Icons.Default.History
+                ) { navController.navigate("callHistory") }
+
+                ActionButton(
+                    label = "SMS History",
+                    icon = Icons.Default.Email
+                ) { navController.navigate("smsHistory") }
+
+                ActionButton(
+                    label = "SMS Inbox",
+                    icon = Icons.AutoMirrored.Filled.Message
+                ) { navController.navigate("inbox") }
+
+                ActionButton(
+                    label = "Settings",
+                    icon = Icons.Default.Settings
+                ) { navController.navigate("settings") }
+            }
+
+            InfoCard()
+        }
+    }
+}
+
+@Composable
+fun ActionButton(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth(0.8f)
+            .height(56.dp)
+    ) {
+        Icon(imageVector = icon, contentDescription = label)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = label)
+    }
+}
+
+@Composable
+fun InfoCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Text(
+            text = "Please install the ZoiPer app and configure it with your SIP account. This app registers your device with the SIP server to get call notifications and invoke ZoiPer automatically.",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
