@@ -116,7 +116,7 @@ fun SettingsScreen(navController: NavController) {
                     var ipAddress by remember {
                         mutableStateOf(SharedPreferences.getKeyValue(context, PrefKeys.IP_ADDRESS))
                     }
-                    var userName by remember {
+                    var username by remember {
                         mutableStateOf(SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER))
                     }
                     var userPass by remember {
@@ -135,9 +135,9 @@ fun SettingsScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     TextField(
-                        value = userName,
-                        onValueChange = { userName = it },
-                        label = { Text("SIP Username") },
+                        value = username,
+                        onValueChange = { username = it },
+                        label = { Text("SIP username") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -152,7 +152,7 @@ fun SettingsScreen(navController: NavController) {
 
                     Button(onClick = {
                         SharedPreferences.saveKeyValue(context, PrefKeys.IP_ADDRESS, ipAddress)
-                        SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_USER, userName)
+                        SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_USER, username)
                         SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_PASS, userPass)
                         RetrofitClient.uploadFCMToServer(context, token) { result ->
                             serverResponse = result

@@ -23,9 +23,9 @@ object RetrofitClient {
     fun uploadFCMToServer(context: Context, fcmToken: String, onResult: (String) -> Unit) {
         val deviceId = UtilFunctions.getDeviceId()
         val server = SharedPreferences.getKeyValue(context, PrefKeys.IP_ADDRESS)
-        val userName = SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER)
+        val username = SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER)
 
-        val request = RegisterDevice(deviceId, userName, fcmToken)
+        val request = RegisterDevice(deviceId, username, fcmToken)
         val url = "http://$server/sip/client/register"
         Log.d("RetrofitClient", "URL: $url")
 
@@ -51,9 +51,9 @@ object RetrofitClient {
     fun sendSmsAlert(context: Context, phoneNumber: String, body: String, onResult: (String) -> Unit) {
         val deviceId = UtilFunctions.getDeviceId()
         val server = SharedPreferences.getKeyValue(context, PrefKeys.IP_ADDRESS)
-        val userName = SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER)
+        val username = SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER)
 
-        val request = SmsAlert(userName, phoneNumber, body, deviceId)
+        val request = SmsAlert(username, phoneNumber, body, deviceId)
         val url = "http://$server/sip/alert/sms"
         Log.d("RetrofitClient", "URL: $url")
 
@@ -79,9 +79,9 @@ object RetrofitClient {
     fun sendGsmSms(context: Context, phoneNumber: String, body: String, onResult: (String) -> Unit) {
         val deviceId = UtilFunctions.getDeviceId()
         val server = SharedPreferences.getKeyValue(context, PrefKeys.IP_ADDRESS)
-        val userName = SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER)
+        val username = SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER)
 
-        val request = SmsAlert(userName, phoneNumber, body, deviceId)
+        val request = SmsAlert(username, phoneNumber, body, deviceId)
         val url = "http://$server/gsm/sms"
         Log.d("RetrofitClient", "URL: $url")
 
