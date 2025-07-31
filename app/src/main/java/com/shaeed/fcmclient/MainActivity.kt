@@ -17,11 +17,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.shaeed.fcmclient.myui.AboutScreen
 import com.shaeed.fcmclient.myui.CallHistoryScreen
 import com.shaeed.fcmclient.myui.ConversationScreen
-import com.shaeed.fcmclient.myui.FcmTokenScreen
 import com.shaeed.fcmclient.myui.InboxScreen
 import com.shaeed.fcmclient.myui.MainScreen
+import com.shaeed.fcmclient.myui.SettingsScreen
 import com.shaeed.fcmclient.myui.SmsHistoryScreen
 import com.shaeed.fcmclient.sms.DefaultSmsHelper
 import com.shaeed.fcmclient.ui.theme.SIPConnectTheme
@@ -33,9 +34,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         createNotificationChannels(this)
 
-        if (!DefaultSmsHelper.isDefaultSmsApp(this)) {
-            DefaultSmsHelper.requestDefaultSmsApp(this)
-        }
+//        if (!DefaultSmsHelper.isDefaultSmsApp(this)) {
+//            DefaultSmsHelper.requestDefaultSmsApp(this)
+//        }
 
         setContent {
             SIPConnectTheme {
@@ -50,18 +51,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                 NavHost(navController, startDestination = "main") {
-                    composable("main") {
-                        MainScreen(navController)
-                    }
-                    composable("callHistory") {
-                        CallHistoryScreen(navController)
-                    }
-                    composable("smsHistory") {
-                        SmsHistoryScreen(navController)
-                    }
-                    composable("inbox") {
-                        InboxScreen(navController)
-                    }
+                    composable("main") { MainScreen(navController) }
+                    composable("callHistory") { CallHistoryScreen(navController) }
+                    composable("smsHistory") { SmsHistoryScreen(navController) }
+                    composable("inbox") { InboxScreen(navController) }
                     composable(
                         "conversation/{contact}",
                         arguments = listOf(navArgument("contact") { type = NavType.StringType })
@@ -69,9 +62,8 @@ class MainActivity : ComponentActivity() {
                         val contact = backStackEntry.arguments?.getString("contact")!!
                         ConversationScreen(navController, contact)
                     }
-                    composable("fcmToken") {
-                        FcmTokenScreen(navController)
-                    }
+                    composable("settings") { SettingsScreen(navController) }
+                    composable("about") { AboutScreen(navController) }
                 }
             }
             PermissionsHelper.RequestAllPermissionsIfNeeded()

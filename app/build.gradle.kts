@@ -1,3 +1,5 @@
+import java.io.ByteArrayOutputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,9 +15,9 @@ android {
     defaultConfig {
         applicationId = "com.shaeed.fcmclient"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 36
+        versionCode = getGitCommitCount()
+        versionName = "1.0.${getGitCommitCount()}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -82,4 +84,13 @@ configurations.all {
             because("Avoid duplicate annotations between JetBrains and IntelliJ")
         }
     }
+}
+
+fun getGitCommitCount(): Int {
+    val stdout = ByteArrayOutputStream()
+    exec {
+        commandLine("git", "rev-list", "--count", "HEAD")
+        standardOutput = stdout
+    }
+    return stdout.toString().trim().toInt()
 }
