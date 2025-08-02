@@ -5,22 +5,20 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 object PermissionsHelper {
     val REQUIRED_PERMISSIONS = arrayOf(
-        Manifest.permission.RECEIVE_SMS,
+//        Manifest.permission.RECEIVE_SMS,
 //        Manifest.permission.SEND_SMS,
 //        Manifest.permission.READ_SMS,
         Manifest.permission.READ_CONTACTS,
-        Manifest.permission.READ_PHONE_STATE
+//        Manifest.permission.READ_PHONE_STATE
     )
 
     fun allGranted(context: Context): Boolean {
@@ -32,7 +30,6 @@ object PermissionsHelper {
     @Composable
     fun RequestAllPermissionsIfNeeded() {
         val context = LocalContext.current
-        //val activity = LocalContext.current as ComponentActivity
 
         val multiplePermissionsLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestMultiplePermissions()

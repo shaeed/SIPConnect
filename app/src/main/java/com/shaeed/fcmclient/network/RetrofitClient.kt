@@ -61,9 +61,9 @@ object RetrofitClient {
             .enqueue(object : Callback<PostResponse> {
                 override fun onResponse(call: Call<PostResponse>, response: Response<PostResponse>) {
                     val result = if (response.isSuccessful) {
-                        "Success! SMS alert sent."
+                        "${response.body()}"
                     } else {
-                        "Error code: ${response.code()}. ${response.body()}"
+                        "Error code: ${response.code()}. Error: ${response.errorBody()?.string()}"
                     }
                     onResult(result)
                 }
@@ -89,9 +89,9 @@ object RetrofitClient {
             .enqueue(object : Callback<PostResponse> {
                 override fun onResponse(call: Call<PostResponse>, response: Response<PostResponse>) {
                     val result = if (response.isSuccessful) {
-                        "Success! SMS sent to server."
+                        "${response.body()}"
                     } else {
-                        "Error code: ${response.code()}. ${response.body()}"
+                        "Error code: ${response.code()}. Error: ${response.errorBody()?.string()}"
                     }
                     onResult(result)
                 }
@@ -119,7 +119,7 @@ object RetrofitClient {
                     val result = if (response.isSuccessful) {
                         "${response.body()}"
                     } else {
-                        "Error code: ${response.code()}. ${response.body()}"
+                        "Error code: ${response.code()}. Error: ${response.errorBody()?.string()}"
                     }
                     onResult(result)
                 }
