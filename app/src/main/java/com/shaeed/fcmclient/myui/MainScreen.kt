@@ -97,10 +97,10 @@ fun MainScreen(navController: NavController) {
                     icon = Icons.Default.History
                 ) { navController.navigate("callHistory") }
 
-                ActionButton(
-                    label = "SMS History",
-                    icon = Icons.Default.Email
-                ) { navController.navigate("smsHistory") }
+//                ActionButton(
+//                    label = "SMS History",
+//                    icon = Icons.Default.Email
+//                ) { navController.navigate("smsHistory") }
 
                 ActionButton(
                     label = "SMS Inbox",

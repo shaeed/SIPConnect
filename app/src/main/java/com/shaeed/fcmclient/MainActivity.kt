@@ -24,7 +24,6 @@ import com.shaeed.fcmclient.myui.InboxScreen
 import com.shaeed.fcmclient.myui.MainScreen
 import com.shaeed.fcmclient.myui.SettingsScreen
 import com.shaeed.fcmclient.myui.SmsHistoryScreen
-import com.shaeed.fcmclient.sms.DefaultSmsHelper
 import com.shaeed.fcmclient.ui.theme.SIPConnectTheme
 import com.shaeed.fcmclient.util.PermissionsHelper
 
