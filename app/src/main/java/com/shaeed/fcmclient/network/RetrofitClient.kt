@@ -103,4 +103,32 @@ object RetrofitClient {
                 }
             })
     }
+
+    fun restartSip(context: Context, onResult: (String) -> Unit) {
+        val deviceId = UtilFunctions.getDeviceId()
+        val server = SharedPreferences.getKeyValue(context, PrefKeys.IP_ADDRESS)
+        val username = SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER)
+
+        val request = RestartSip(deviceId, username)
+        val url = "http://$server/sip/restart"
+        Log.d("RetrofitClient", "URL: $url")
+
+        apiService.restartSip(url, request)
+            .enqueue(object : Callback<PostResponse> {
+                override fun onResponse(call: Call<PostResponse>, response: Response<PostResponse>) {
+                    val result = if (response.isSuccessful) {
+                        "${response.body()}"
+                    } else {
+                        "Error code: ${response.code()}. ${response.body()}"
+                    }
+                    onResult(result)
+                }
+
+                override fun onFailure(call: Call<PostResponse>, t: Throwable) {
+                    val result = "Failure: ${t.message}"
+                    Log.e("RetrofitClient", result)
+                    onResult(result)
+                }
+            })
+    }
 }

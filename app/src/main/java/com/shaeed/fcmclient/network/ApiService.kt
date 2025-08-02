@@ -14,4 +14,7 @@ interface ApiService {
 
     @POST()
     fun sendGsmSms(@Url url: String, @Body request: SmsAlert): Call<PostResponse>
+
+    @POST()
+    fun restartSip(@Url url: String, @Body request: RestartSip): Call<PostResponse>
 }
