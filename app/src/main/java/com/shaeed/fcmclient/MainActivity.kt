@@ -19,11 +19,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.shaeed.fcmclient.myui.AboutScreen
 import com.shaeed.fcmclient.myui.CallHistoryScreen
-import com.shaeed.fcmclient.myui.ConversationScreen
-import com.shaeed.fcmclient.myui.InboxScreen
+import com.shaeed.fcmclient.myui.sms.ConversationScreen
+import com.shaeed.fcmclient.myui.sms.InboxScreen
 import com.shaeed.fcmclient.myui.MainScreen
 import com.shaeed.fcmclient.myui.SettingsScreen
 import com.shaeed.fcmclient.myui.SmsHistoryScreen
+import com.shaeed.fcmclient.myui.sms.NewMessageScreen
 import com.shaeed.fcmclient.ui.theme.SIPConnectTheme
 import com.shaeed.fcmclient.util.PermissionsHelper
 
@@ -54,6 +55,7 @@ class MainActivity : ComponentActivity() {
                     composable("callHistory") { CallHistoryScreen(navController) }
                     composable("smsHistory") { SmsHistoryScreen(navController) }
                     composable("inbox") { InboxScreen(navController) }
+                    composable("inbox/newMessage") { NewMessageScreen(navController) }
                     composable(
                         "conversation/{contact}",
                         arguments = listOf(navArgument("contact") { type = NavType.StringType })

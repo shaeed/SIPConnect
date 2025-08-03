@@ -1,4 +1,4 @@
-package com.shaeed.fcmclient.myui
+package com.shaeed.fcmclient.myui.sms
 
 import android.content.ClipData
 import android.content.ClipboardManager

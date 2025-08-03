@@ -1,4 +1,4 @@
-package com.shaeed.fcmclient.myui
+package com.shaeed.fcmclient.myui.sms
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -17,9 +17,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,6 +67,13 @@ fun InboxScreen(navController: NavController, viewModel: InboxViewModel = viewMo
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate("inbox/newMessage") }
+            ) {
+                Icon(Icons.Default.Sms, contentDescription = "New Message")
+            }
         }
     ) { innerPadding ->
         LazyColumn(

@@ -92,9 +92,11 @@ fun SettingsScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = token,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
                         modifier = Modifier
-                            .background(Color.LightGray, RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
                             .padding(8.dp)
                             .fillMaxWidth()
                     )
@@ -187,19 +189,22 @@ fun SettingsScreen(navController: NavController) {
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFCDD2)
+                    containerColor = MaterialTheme.colorScheme.errorContainer
                 ),
                 elevation = CardDefaults.cardElevation(4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Restart SIPConnect Server", style = MaterialTheme.typography.titleMedium)
+                    Text("Restart SIPConnect Server",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Warning: This will restart the SIPConnect server (asterisk). Please" +
                                 " restart only if its not responding or there is errors." +
                                 " Restarting it will end any active call connected.",
                         style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier
                             .padding(8.dp)
                             .fillMaxWidth()
@@ -212,10 +217,10 @@ fun SettingsScreen(navController: NavController) {
                         Icon(
                             imageVector = Icons.Filled.Warning,
                             contentDescription = "Danger",
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.onError
                         )
                         Spacer(modifier = Modifier.width(8.dp)) // Add some spacing
-                        Text("Restart")
+                        Text("Restart", color = MaterialTheme.colorScheme.onError)
                     }
                 }
             }
