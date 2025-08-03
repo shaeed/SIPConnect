@@ -1,6 +1,5 @@
 package com.shaeed.fcmclient.myui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -25,61 +23,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 @Composable
-fun MainScreenOld(navController: NavController) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("📱 SIP Client Config App", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { navController.navigate("callHistory") }) {
-            Text("Call History")
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { navController.navigate("smsHistory") }) {
-            Text("SMS History")
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { navController.navigate("inbox") }) {
-            Text("SMS")
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { navController.navigate("fcmToken") }) {
-            Text("FCM Token")
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Please install ZoiPer app and configure it with SIP account. This App will " +
-                    "be used to register this device with SIP server to get the " +
-                    "notification of call, " +
-                    "and invoke ZoiPer app.",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier
-                .background(Color.LightGray)
-                .padding(8.dp)
-                .fillMaxWidth()
-        )
-    }
-}
-
-@Composable
 fun MainScreen(navController: NavController) {
     Surface(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+            .fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp),
         ) {
             Text(
                 "📱 SIP Client Config App",
@@ -96,17 +55,14 @@ fun MainScreen(navController: NavController) {
                     label = "Call History",
                     icon = Icons.Default.History
                 ) { navController.navigate("callHistory") }
-
 //                ActionButton(
 //                    label = "SMS History",
 //                    icon = Icons.Default.Email
 //                ) { navController.navigate("smsHistory") }
-
                 ActionButton(
                     label = "SMS Inbox",
                     icon = Icons.AutoMirrored.Filled.Message
                 ) { navController.navigate("inbox") }
-
                 ActionButton(
                     label = "Settings",
                     icon = Icons.Default.Settings
