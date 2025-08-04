@@ -61,11 +61,11 @@ fun InboxScreen(navController: NavController, viewModel: InboxViewModel = viewMo
         topBar = {
             TopAppBar(
                 title = { Text("Inbox") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+//                navigationIcon = {
+//                    IconButton(onClick = { navController.popBackStack() }) {
+//                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+//                    }
+//                }
             )
         },
         floatingActionButton = {

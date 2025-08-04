@@ -12,19 +12,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import com.shaeed.fcmclient.myui.AboutScreen
-import com.shaeed.fcmclient.myui.CallHistoryScreen
-import com.shaeed.fcmclient.myui.sms.ConversationScreen
-import com.shaeed.fcmclient.myui.sms.InboxScreen
 import com.shaeed.fcmclient.myui.MainScreen
-import com.shaeed.fcmclient.myui.SettingsScreen
-import com.shaeed.fcmclient.myui.SmsHistoryScreen
-import com.shaeed.fcmclient.myui.sms.NewMessageScreen
 import com.shaeed.fcmclient.ui.theme.SIPConnectTheme
 import com.shaeed.fcmclient.util.PermissionsHelper
 
@@ -49,23 +38,7 @@ class MainActivity : ComponentActivity() {
                         navController.navigate(destination)
                     }
                 }
-
-                NavHost(navController, startDestination = "main") {
-                    composable("main") { MainScreen(navController) }
-                    composable("callHistory") { CallHistoryScreen(navController) }
-                    composable("smsHistory") { SmsHistoryScreen(navController) }
-                    composable("inbox") { InboxScreen(navController) }
-                    composable("inbox/newMessage") { NewMessageScreen(navController) }
-                    composable(
-                        "conversation/{contact}",
-                        arguments = listOf(navArgument("contact") { type = NavType.StringType })
-                    ) { backStackEntry ->
-                        val contact = backStackEntry.arguments?.getString("contact")!!
-                        ConversationScreen(navController, contact)
-                    }
-                    composable("settings") { SettingsScreen(navController) }
-                    composable("about") { AboutScreen(navController) }
-                }
+                MainScreen(navController)
             }
             PermissionsHelper.RequestAllPermissionsIfNeeded()
         }

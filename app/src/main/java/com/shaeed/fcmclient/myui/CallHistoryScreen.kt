@@ -70,11 +70,11 @@ fun CallHistoryScreen(navController: NavController, callViewModel: CallViewModel
         topBar = {
             TopAppBar(
                 title = { Text("📞 Call History") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+//                navigationIcon = {
+//                    IconButton(onClick = { navController.popBackStack() }) {
+//                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+//                    }
+//                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
