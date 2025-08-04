@@ -64,7 +64,7 @@ fun NewMessageScreen(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                //.padding(16.dp)
+                .padding(16.dp)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
