@@ -113,13 +113,15 @@ class MyFirebaseService : FirebaseMessagingService() {
     private fun showIncomingSmsNotification(data: Map<String, String>) {
         val from = data["phone_number"] ?: "Unknown"
         val body = data["body"] ?: ""
-        addSmsToDb(from, body, applicationContext)
+        val fromNormalized = ContactHelper.normalizeNumber(from)
+        // addSmsToDb(from, body, applicationContext)
         // new sms system
         SmsRepository.insertFirebaseMessage(applicationContext, from, body, System.currentTimeMillis())
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("destination", "smsHistory")
+            // putExtra("destination", "inbox")
+            putExtra("destination", "conversation/{$fromNormalized}")
         }
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
