@@ -2,7 +2,9 @@ package com.shaeed.fcmclient.network
 
 import retrofit2.Call
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.QueryMap
 import retrofit2.http.Url
 
 interface ApiService {
@@ -17,4 +19,7 @@ interface ApiService {
 
     @POST()
     fun restartSip(@Url url: String, @Body request: RestartSip): Call<PostResponse>
+
+    @GET()
+    fun getTokenFromServer(@Url url: String, @QueryMap options: Map<String, String>): Call<TokenResponse>
 }

@@ -6,3 +6,5 @@ data class SmsAlert(val username: String, val phone_number: String, val body: St
 data class PostResponse(val message: String)
 
 data class RestartSip(val device_id: String, val username: String)
+
+data class TokenResponse(val fcm_token: String)

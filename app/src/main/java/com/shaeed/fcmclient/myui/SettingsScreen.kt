@@ -1,5 +1,7 @@
 package com.shaeed.fcmclient.myui
 
+import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -46,6 +48,9 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.shaeed.fcmclient.network.RetrofitClient
 import com.shaeed.fcmclient.data.PrefKeys
 import com.shaeed.fcmclient.data.SharedPreferences
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +59,10 @@ fun SettingsScreen(navController: NavController) {
     var serverResponse by remember { mutableStateOf("") }
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO){ checkAndReregister(context) }
+    }
 
     Scaffold(
         topBar = {
@@ -238,4 +247,20 @@ fun getFCMToken(): String {
         }
     }
     return token
+}
+
+suspend fun checkAndReregister(context: Context) {
+    if (SharedPreferences.getKeyValue(context, PrefKeys.IP_ADDRESS) == ""
+        || SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER) == "") {
+        return
+    }
+    val token = FirebaseMessaging.getInstance().token.await()
+    RetrofitClient.getTokenFromServer(context){ serverToken ->
+        if (serverToken == null || serverToken != token) {
+            // Try auto registering again
+            RetrofitClient.uploadFCMToServer(context, token) { result ->
+                Log.d("SettingsScreen", "Auto register. $result")
+            }
+        }
+    }
 }
