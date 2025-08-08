@@ -48,7 +48,9 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.shaeed.fcmclient.network.RetrofitClient
 import com.shaeed.fcmclient.data.PrefKeys
 import com.shaeed.fcmclient.data.SharedPreferences
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
@@ -169,8 +171,8 @@ fun SettingsScreen(navController: NavController) {
                         SharedPreferences.saveKeyValue(context, PrefKeys.IP_ADDRESS, ipAddress)
                         SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_USER, username)
                         SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_PASS, userPass)
-                        RetrofitClient.uploadFCMToServer(context, token) { result ->
-                            serverResponse = result
+                        CoroutineScope(Dispatchers.IO).launch {
+                            serverResponse = RetrofitClient.uploadFCMToServer(context, token)
                         }
                     }) {
                         Text("Save & Connect")
@@ -220,7 +222,12 @@ fun SettingsScreen(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
-                        onClick = { RetrofitClient.restartSip(context) { result -> serverResponse = result } },
+                        onClick = {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                serverResponse = RetrofitClient.restartSip(context)
+                                Log.d("SettingsScreen", serverResponse)
+                            }
+                        },
                         shape = RectangleShape,
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
                         Icon(
@@ -254,13 +261,10 @@ suspend fun checkAndReregister(context: Context) {
         || SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER) == "") {
         return
     }
+
     val token = FirebaseMessaging.getInstance().token.await()
-    RetrofitClient.getTokenFromServer(context){ serverToken ->
-        if (serverToken == null || serverToken != token) {
-            // Try auto registering again
-            RetrofitClient.uploadFCMToServer(context, token) { result ->
-                Log.d("SettingsScreen", "Auto register. $result")
-            }
-        }
+    val serverToken = RetrofitClient.getTokenFromServer(context)
+    if (serverToken == null || serverToken != token) {
+        RetrofitClient.uploadFCMToServer(context, token)
     }
 }

@@ -1,4 +1,20 @@
 import java.io.ByteArrayOutputStream
+import org.gradle.process.ExecOperations
+
+abstract class GitHelper @Inject constructor(
+    private val execOps: ExecOperations
+) {
+    fun commitCount(): Int {
+        val stdout = ByteArrayOutputStream()
+        execOps.exec {
+            commandLine("git", "rev-list", "--count", "HEAD")
+            standardOutput = stdout
+        }
+        return stdout.toString().trim().toInt()
+    }
+}
+
+val gitHelper = objects.newInstance(GitHelper::class.java)
 
 plugins {
     alias(libs.plugins.android.application)
@@ -10,15 +26,16 @@ plugins {
 
 android {
     namespace = "com.shaeed.fcmclient"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
+        val commitCount = gitHelper.commitCount()
+
         applicationId = "com.shaeed.fcmclient"
         minSdk = 26
         targetSdk = 36
-        versionCode = getGitCommitCount()
-        versionName = "1.0.${getGitCommitCount()}"
-
+        versionCode = commitCount
+        versionName = "1.0.$commitCount"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -32,11 +49,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+        }
     }
     buildFeatures {
         compose = true
@@ -86,12 +105,13 @@ configurations.all {
     }
 }
 
-fun getGitCommitCount(): Int {
-    val stdout = ByteArrayOutputStream()
-    project.exec {
-        commandLine("git", "rev-list", "--count", "HEAD")
-        standardOutput = stdout
-    }
+//fun getGitCommitCount(): Int {
+//    val stdout = ByteArrayOutputStream()
+//    project.exec {
+//        commandLine("git", "rev-list", "--count", "HEAD")
+//        standardOutput = stdout
+//    }
+//
+//    return stdout.toString().trim().toInt()
+//}
 
-    return stdout.toString().trim().toInt()
-}

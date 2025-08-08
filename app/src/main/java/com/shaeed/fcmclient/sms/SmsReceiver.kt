@@ -12,6 +12,9 @@ import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.shaeed.fcmclient.data.SmsRepository
 import com.shaeed.fcmclient.network.RetrofitClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SmsReceiver : BroadcastReceiver() {
     @SuppressLint("MissingPermission")
@@ -32,8 +35,9 @@ class SmsReceiver : BroadcastReceiver() {
                 //val slot = getSimSlot(context, subscriptionId)
                 Log.d("SmsReceiver", "subscriptionId: $subscriptionId. From: $sender Message: $body Slot: slot")
 
-                SmsRepository.insertGsmMessage(context, sender, body, timestamp, subscriptionId)
-                RetrofitClient.sendSmsAlert(context, sender, body) { result ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    SmsRepository.insertGsmMessage(context, sender, body, timestamp, subscriptionId)
+                    val result = RetrofitClient.sendSmsAlert(context, sender, body)
                     Log.d("SmsReceiver", result)
                 }
             }

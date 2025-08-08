@@ -10,9 +10,11 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.shaeed.fcmclient.data.SmsRepository
 import com.shaeed.fcmclient.data.addCallerToDb
-import com.shaeed.fcmclient.data.addSmsToDb
 import com.shaeed.fcmclient.myui.IncomingCallActivity
 import com.shaeed.fcmclient.util.ContactHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
@@ -114,9 +116,11 @@ class MyFirebaseService : FirebaseMessagingService() {
         val from = data["phone_number"] ?: "Unknown"
         val body = data["body"] ?: ""
         val fromNormalized = ContactHelper.normalizeNumber(from)
-        // addSmsToDb(from, body, applicationContext)
+
         // new sms system
-        SmsRepository.insertFirebaseMessage(applicationContext, from, body, System.currentTimeMillis())
+        CoroutineScope(Dispatchers.IO).launch {
+            SmsRepository.insertFirebaseMessage(applicationContext, from, body, System.currentTimeMillis())
+        }
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

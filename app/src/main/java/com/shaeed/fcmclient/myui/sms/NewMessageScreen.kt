@@ -33,6 +33,9 @@ import androidx.navigation.NavController
 import com.shaeed.fcmclient.sms.SmsSender
 import com.shaeed.fcmclient.viewmodel.ContactViewModel
 import com.shaeed.fcmclient.viewmodel.ContactViewModelFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,7 +111,9 @@ fun NewMessageScreen(
             Button(
                 onClick = {
                     if (recipient.isNotBlank() && message.isNotBlank()) {
-                        SmsSender.send(context, recipient, message)
+                        CoroutineScope(Dispatchers.IO).launch {
+                            SmsSender.send(context, recipient, message)
+                        }
                         navController.popBackStack()
                         //navController.navigate("conversation/${recipient}")
                     }
