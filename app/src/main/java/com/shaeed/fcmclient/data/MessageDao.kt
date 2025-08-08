@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 interface MessageDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(message: MessageEntity)
+    suspend fun insert(message: MessageEntity): Long
 
     @Update
     suspend fun update(message: MessageEntity)
@@ -35,11 +35,11 @@ interface MessageDao {
     @Query("DELETE FROM messages WHERE id = :id")
     suspend fun deleteMessage(id: Long)
 
-    @Query("UPDATE messages SET starred = :isStarred WHERE id = :messageId")
-    suspend fun starMessage(messageId: Long, isStarred: Boolean)
+    @Query("UPDATE messages SET starred = :isStarred WHERE id = :id")
+    suspend fun starMessage(id: Long, isStarred: Boolean)
 
-    @Query("UPDATE messages SET deliveryStatus = :status WHERE id = :messageId")
-    suspend fun updateDeliveryStatus(messageId: Long, status: DeliveryStatus)
+    @Query("UPDATE messages SET deliveryStatus = :status WHERE id = :id")
+    suspend fun updateDeliveryStatus(id: Long, status: DeliveryStatus)
 
     @Query("SELECT * FROM messages WHERE threadId = :threadId ORDER BY timestamp ASC")
     fun getMessagesForThread(threadId: Long): Flow<List<MessageEntity>>

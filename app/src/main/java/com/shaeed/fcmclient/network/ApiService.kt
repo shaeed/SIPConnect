@@ -1,6 +1,7 @@
 package com.shaeed.fcmclient.network
 
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -9,17 +10,17 @@ import retrofit2.http.Url
 
 interface ApiService {
     @POST()
-    fun registerDeviceOnServer(@Url url: String, @Body request: RegisterDevice): Call<PostResponse>
+    suspend fun registerDeviceOnServer(@Url url: String, @Body request: RegisterDevice): Response<PostResponse>
 
     @POST()
-    fun smsAlert(@Url url: String, @Body request: SmsAlert): Call<PostResponse>
+    suspend fun smsAlert(@Url url: String, @Body request: SmsAlert): Response<PostResponse>
 
     @POST()
-    fun sendGsmSms(@Url url: String, @Body request: SmsAlert): Call<PostResponse>
+    suspend fun sendGsmSms(@Url url: String, @Body request: SmsAlert): Response<PostResponse>
 
     @POST()
-    fun restartSip(@Url url: String, @Body request: RestartSip): Call<PostResponse>
+    suspend fun restartSip(@Url url: String, @Body request: RestartSip): Response<PostResponse>
 
     @GET()
-    fun getTokenFromServer(@Url url: String, @QueryMap options: Map<String, String>): Call<TokenResponse>
+    suspend fun getTokenFromServer(@Url url: String, @QueryMap options: Map<String, String>): Response<TokenResponse>
 }

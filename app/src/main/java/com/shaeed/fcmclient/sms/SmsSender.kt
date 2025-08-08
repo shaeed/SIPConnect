@@ -8,19 +8,42 @@ import android.telephony.SmsManager
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresPermission
+import com.shaeed.fcmclient.data.DeliveryStatus
 import com.shaeed.fcmclient.data.SmsRepository
 import com.shaeed.fcmclient.network.RetrofitClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object SmsSender {
-    fun send(context: Context, to: String, message: String) {
+    suspend fun send(context: Context, to: String, message: String) {
         // val smsManager = SmsManager.getDefault()
         // smsManager.sendTextMessage(to, null, message, null, null)
 
-        RetrofitClient.sendGsmSms(context, to, message){ result ->
-            Log.d("SmsSender", result)
+        var errored = false
+        val messageID = SmsRepository.insertOutgoingMessage(context, to, message, System.currentTimeMillis())
+        var message = ""
+        try {
+            val result = RetrofitClient.sendGsmSms(context, to, message)
+            if (!result.isSuccessful) {
+                errored = true
+                val errorMsg = result.errorBody()?.string().orEmpty()
+                message = "Error code: ${result.code()}. Error: $errorMsg"
+            }
+        } catch (e: Exception) {
+            errored = true
+            message =  "Failure: ${e.message}"
         }
-        SmsRepository.insertOutgoingMessage(context, to, message, System.currentTimeMillis())
+
+        if (errored){
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Failure: $message", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        val status = if (errored) DeliveryStatus.FAILED else DeliveryStatus.SENT
+        SmsRepository.updateDeliveryStatus(context, messageID, status)
     }
 
     fun sendSms(

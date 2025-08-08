@@ -15,7 +15,7 @@ class ConversationViewModel(app: Application) : AndroidViewModel(app) {
     fun getMessages(senderNormalized: String) = dao.getMessagesForSender(senderNormalized)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun sendMessage(to: String, body: String) {
+    suspend fun sendMessage(to: String, body: String) {
         SmsSender.send(getApplication(), to, body)
     }
 
