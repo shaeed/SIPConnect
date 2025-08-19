@@ -1,5 +1,6 @@
 package com.shaeed.fcmclient.data
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -20,12 +21,20 @@ interface MessageDao {
     fun getMessagesForSender(senderNormalized: String): Flow<List<MessageEntity>>
 
     //@Query("SELECT sender, MAX(timestamp) AS timestamp, body, type, id FROM messages GROUP BY senderNormalized ORDER BY timestamp DESC")
-    @Query("SELECT id, threadId, sender, senderNormalized, " +
-            "body, MAX(timestamp) AS timestamp, type, read, deliveryStatus, " +
-            "simId, starred, deleted " +
-            "FROM messages GROUP BY senderNormalized ORDER BY timestamp DESC")
+    @Query("""
+        SELECT id, threadId, sender, senderNormalized, body, 
+        MAX(timestamp) AS timestamp, type, read, deliveryStatus, simId, starred, deleted 
+        FROM messages 
+        GROUP BY senderNormalized 
+        ORDER BY timestamp DESC""")
     fun getConversationList(): Flow<List<MessageEntity>>
 
+    @Query("""
+        SELECT * FROM messages 
+        WHERE senderNormalized = :senderNormalized
+        ORDER BY timestamp ASC""")
+    fun getMessagesPage(senderNormalized: String): PagingSource<Int, MessageEntity>
+    
     @Query("UPDATE messages SET read = 1 WHERE senderNormalized = :senderNormalized")
     suspend fun markAsRead(senderNormalized: String)
 

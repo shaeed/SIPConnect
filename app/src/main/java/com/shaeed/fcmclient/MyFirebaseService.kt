@@ -125,7 +125,7 @@ class MyFirebaseService : FirebaseMessagingService() {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             // putExtra("destination", "inbox")
-            putExtra("destination", "conversation/{$fromNormalized}")
+            putExtra("destination", "conversation/$from/$fromNormalized")
         }
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT

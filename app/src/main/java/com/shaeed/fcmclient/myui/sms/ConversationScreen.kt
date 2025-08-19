@@ -3,6 +3,7 @@ package com.shaeed.fcmclient.myui.sms
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -26,7 +27,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.SmsFailed
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +54,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.shaeed.fcmclient.data.DeliveryStatus
 import com.shaeed.fcmclient.data.MessageEntity
 import com.shaeed.fcmclient.data.MessageType
@@ -64,7 +69,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConversationScreen(
+fun ConversationScreenO(
     navController: NavController,
     senderNormalized: String,
     viewModel: ConversationViewModel = viewModel()
@@ -75,14 +80,18 @@ fun ConversationScreen(
     val phonebook by contactViewModel.phonebook.collectAsState()
     val contactName = phonebook[senderNormalized] ?: senderNormalized
 
-    val didInitialScroll = remember { mutableStateOf(true) }
-//    LaunchedEffect(messages) {
-//        didInitialScroll.value = true
-//        if (!didInitialScroll.value && messages.isNotEmpty()) {
-//            listState.scrollToItem(messages.lastIndex)
-//            Log.d("css", "Scrolled")
-//        }
-//    }
+    // Show only last 50 messages
+    val displayMessages = remember(messages) {
+        if (messages.size > 50) messages.takeLast(20) else messages
+    }
+
+    // Auto-scroll when new messages arrive if user is near bottom
+    LaunchedEffect(displayMessages.size) {
+        if (displayMessages.isNotEmpty() &&
+            listState.firstVisibleItemIndex >= displayMessages.size - 5) {
+            listState.animateScrollToItem(displayMessages.lastIndex)
+        }
+    }
 
     LaunchedEffect(senderNormalized) { viewModel.markAsRead(senderNormalized) }
 
@@ -109,7 +118,7 @@ fun ConversationScreen(
                 state = listState,
                 contentPadding = PaddingValues(8.dp)
             ) {
-                items(messages) { msg ->
+                items(displayMessages, key = { it.id }) { msg ->
                     MessageBubble(
                         message = msg,
                         onLongPress = { showDeleteDialog = true to msg.id }
@@ -144,10 +153,178 @@ fun ConversationScreen(
                     CoroutineScope(Dispatchers.IO).launch {
                         viewModel.sendMessage(messages[0].sender, text)
                     }
-                    didInitialScroll.value = false
                 }
             )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ConversationScreen(
+    navController: NavController,
+    senderNormalized: String,
+    sender: String,
+    viewModel: ConversationViewModel = viewModel()
+) {
+    val messages = viewModel.getPagedMessages(senderNormalized).collectAsLazyPagingItems()
+    val listState = rememberLazyListState()
+
+    val contactViewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(LocalContext.current))
+    val phonebook by contactViewModel.phonebook.collectAsState()
+    val contactName = phonebook[senderNormalized] ?: sender
+
+    // We track first load so we can start scrolled to bottom
+    var initialScrollDone by remember { mutableStateOf(false) }
+
+    // For scroll anchoring
+    var anchorId by remember { mutableStateOf<Long?>(null) }
+    var anchorOffset by remember { mutableStateOf(0) }
+
+    // First load: scroll to bottom
+    LaunchedEffect(messages.itemCount) {
+        if (!initialScrollDone && messages.itemCount > 0) {
+            listState.scrollToItem(messages.itemCount - 1)
+            initialScrollDone = true
+        }
+    }
+
+    // Auto-scroll when near bottom and new messages arrive
+    LaunchedEffect(messages.itemCount) {
+        val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+        if (
+            messages.itemCount > 0 &&
+            lastVisibleIndex != null &&
+            lastVisibleIndex >= messages.itemCount - 3
+        ) {
+            listState.animateScrollToItem(messages.itemCount - 1)
+        }
+    }
+
+    // Capture anchor before prepend load
+    LaunchedEffect(messages.loadState.prepend) {
+        if (messages.loadState.prepend is LoadState.Loading) {
+            listState.layoutInfo.visibleItemsInfo.firstOrNull()?.let { firstVisible ->
+                anchorId = messages[firstVisible.index]?.id
+                anchorOffset = firstVisible.offset
+            }
+        }
+    }
+
+    // Restore anchor after prepend completes
+    LaunchedEffect(messages.loadState.prepend) {
+        if (messages.loadState.prepend is LoadState.NotLoading) {
+            anchorId?.let { id ->
+                val index = (0 until messages.itemCount)
+                    .firstOrNull { idx -> messages[idx]?.id == id }
+                if (index != null) {
+                    listState.scrollToItem(index, anchorOffset)
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(contactName) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
+            var showDeleteDialog by remember { mutableStateOf<Pair<Boolean, Long?>>(false to null) }
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(8.dp),
+                //reverseLayout = true
+            ) {
+                items(
+                    count = messages.itemCount,
+                    // key = { idx -> messages[idx]?.id ?: idx }
+                    key = { idx -> messages[idx]?.id ?: idx }
+                ) { idx ->
+                    messages[idx]?.let { msg ->
+                        MessageBubble(
+                            message = msg,
+                            onLongPress = { showDeleteDialog = true to msg.id }
+                        )
+                        Spacer(Modifier.height(4.dp))
+                    }
+                }
+
+                // Show loading older messages at top
+                messages.apply {
+                    when {
+                        messages.loadState.refresh is LoadState.Loading && messages.itemCount == 0 -> {
+                            // Only show full screen loading if list is empty
+                            item {
+                                Box(
+                                    Modifier.fillParentMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                        messages.loadState.prepend is LoadState.Loading -> {
+                            // Show loading at the top while fetching older messages
+                            item {
+                                Box(Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                                }
+                            }
+                        }
+                        messages.loadState.append is LoadState.Loading -> {
+                            // (optional) show loading at bottom if you load newer messages
+                            item {
+                                Box(
+                                    Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (showDeleteDialog.first) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false to null },
+                    title = { Text("Delete Message") },
+                    text = { Text("Are you sure you want to delete this message?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showDeleteDialog.second?.let { id ->
+                                viewModel.deleteMessage(id)
+                            }
+                            showDeleteDialog = false to null
+                        }) { Text("Delete") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteDialog = false to null }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
+
+            ComposeMessageBar(
+                onSend = { text ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        viewModel.sendMessage(sender, text)
+                    }
+                }
+            )
+        }
+
     }
 }
 
@@ -249,12 +426,12 @@ fun MessageBubble(
                     DeliveryStatus.PENDING -> Icons.Default.Check
                     DeliveryStatus.SENT -> Icons.Default.DoneAll
                     DeliveryStatus.DELIVERED -> Icons.Default.DoneAll
-                    DeliveryStatus.FAILED -> Icons.Default.Check
+                    DeliveryStatus.FAILED -> Icons.Default.SmsFailed
                 }
                 val iconColor = when (message.deliveryStatus) {
                     DeliveryStatus.PENDING -> Color.Gray
                     DeliveryStatus.SENT -> Color.Gray
-                    DeliveryStatus.DELIVERED -> Color(0xFF1E88E5) // blue double tick
+                    DeliveryStatus.DELIVERED -> Color.Blue
                     DeliveryStatus.FAILED -> Color.Red
                 }
                 Icon(

@@ -174,11 +174,15 @@ fun MainScreen(navController: NavHostController) {
             composable("inbox") { InboxScreen(navController) }
             composable("settings") { SettingsScreen(navController) }
             composable("inbox/newMessage") { NewMessageScreen(navController) }
-            composable("conversation/{contact}",
-                arguments = listOf(navArgument("contact") { type = NavType.StringType })
+            composable("conversation/{contact}/{contactNormalized}",
+                arguments = listOf(
+                    navArgument("contact") { type = NavType.StringType },
+                    navArgument("contactNormalized") { type = NavType.StringType }
+                )
             ) { backStackEntry ->
-                val contact = backStackEntry.arguments?.getString("contact")!!
-                ConversationScreen(navController, contact)
+                val senderNormalized = backStackEntry.arguments?.getString("contactNormalized")!!
+                val sender = backStackEntry.arguments?.getString("contact")!!
+                ConversationScreen(navController, senderNormalized, sender)
             }
             composable("about") { AboutScreen(navController) }
         }

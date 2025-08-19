@@ -89,7 +89,7 @@ fun InboxScreen(navController: NavController, viewModel: InboxViewModel = viewMo
                 ConversationListItem(
                     convo,
                     contactName,
-                    onClick = { navController.navigate("conversation/${convo.senderNormalized}") },
+                    onClick = { navController.navigate("conversation/${convo.sender}/${convo.senderNormalized}") },
                     onLongPress = { showDialog = true }
                 )
                 HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
