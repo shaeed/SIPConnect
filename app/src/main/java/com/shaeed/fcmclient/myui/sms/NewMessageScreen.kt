@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.shaeed.fcmclient.sms.SmsSender
+import com.shaeed.fcmclient.util.UtilFunctions
 import com.shaeed.fcmclient.viewmodel.ContactViewModel
 import com.shaeed.fcmclient.viewmodel.ContactViewModelFactory
 import kotlinx.coroutines.CoroutineScope
@@ -47,6 +48,7 @@ fun NewMessageScreen(
     val phonebook by contactViewModel.phonebook.collectAsState()
     var recipient by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
+    val canSend = UtilFunctions.canSendSms(LocalContext.current)
 
     val matchingContacts = phonebook.filter { (number, name) ->
         number.contains(recipient, ignoreCase = true) || name.contains(recipient, ignoreCase = true)
@@ -119,7 +121,7 @@ fun NewMessageScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = recipient.isNotBlank() && message.isNotBlank()
+                enabled = recipient.isNotBlank() && message.isNotBlank() && canSend
             ) {
                 Text("Send")
             }

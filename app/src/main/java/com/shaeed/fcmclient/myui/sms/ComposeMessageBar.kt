@@ -18,13 +18,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.shaeed.fcmclient.util.UtilFunctions
 
 @Composable
 fun ComposeMessageBar(
     onSend: (String) -> Unit
 ) {
     var text by remember { mutableStateOf("") }
+    val canSend = UtilFunctions.canSendSms(LocalContext.current)
 
     Row(
         modifier = Modifier
@@ -46,7 +49,8 @@ fun ComposeMessageBar(
                     onSend(text)
                     text = ""
                 }
-            }
+            },
+            enabled = canSend && text.isNotBlank()
         ) {
             Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
         }

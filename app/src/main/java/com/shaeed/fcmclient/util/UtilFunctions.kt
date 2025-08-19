@@ -1,6 +1,10 @@
 package com.shaeed.fcmclient.util
 
+import android.content.Context
 import android.os.Build
+import com.shaeed.fcmclient.data.PerfValues
+import com.shaeed.fcmclient.data.PrefKeys
+import com.shaeed.fcmclient.data.SharedPreferences
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -28,5 +32,10 @@ object UtilFunctions {
     fun getDeviceId(): String {
         val deviceId = "${Build.MANUFACTURER} ${Build.MODEL}"
         return deviceId
+    }
+
+    fun canSendSms(context: Context): Boolean {
+        val canSend = SharedPreferences.getKeyValue(context, PrefKeys.REGISTRATION_STATUS) == PerfValues.YES
+        return canSend
     }
 }

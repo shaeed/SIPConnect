@@ -3,6 +3,7 @@ package com.shaeed.fcmclient.network
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import com.shaeed.fcmclient.data.PerfValues
 import com.shaeed.fcmclient.data.PrefKeys
 import com.shaeed.fcmclient.data.SharedPreferences
 import retrofit2.Call
@@ -78,7 +79,11 @@ object RetrofitClient {
         val url = "http://$server/sip/client/register"
         Log.d("RetrofitClient", "URL: $url")
 
-        return handleRetrofitCall(url, request, apiService::registerDeviceOnServer)
+        val message =  handleRetrofitCall(url, request, apiService::registerDeviceOnServer)
+        val regStatus = if (message.contains("token updated")) PerfValues.YES else PerfValues.NO
+        SharedPreferences.saveKeyValue(context, PrefKeys.REGISTRATION_STATUS, regStatus)
+
+        return message
     }
 
     suspend fun sendSmsAlert(context: Context, phoneNumber: String, body: String): String {

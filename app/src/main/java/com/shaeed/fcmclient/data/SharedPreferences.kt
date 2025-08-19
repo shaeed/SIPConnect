@@ -8,6 +8,12 @@ object PrefKeys {
     const val LAST_FCM_TOKEN = "fcm_token"
     const val SIP_SERVER_USER = "sip_server_user"
     const val SIP_SERVER_PASS = "sip_server_pass"
+    const val REGISTRATION_STATUS = "registration_status_on_server"
+}
+
+object PerfValues {
+    const val YES = "yes"
+    const val NO = "no"
 }
 
 object SharedPreferences {
