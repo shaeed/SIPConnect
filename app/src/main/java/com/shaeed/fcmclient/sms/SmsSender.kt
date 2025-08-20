@@ -17,28 +17,30 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object SmsSender {
-    suspend fun send(context: Context, to: String, message: String) {
+    suspend fun send(context: Context, to: String, body: String) {
         // val smsManager = SmsManager.getDefault()
         // smsManager.sendTextMessage(to, null, message, null, null)
 
         var errored = false
-        val messageID = SmsRepository.insertOutgoingMessage(context, to, message, System.currentTimeMillis())
-        var message = ""
+        val messageID = SmsRepository.insertOutgoingMessage(context, to, body, System.currentTimeMillis())
+        var response = ""
         try {
-            val result = RetrofitClient.sendGsmSms(context, to, message)
+            val result = RetrofitClient.sendGsmSms(context, to, body)
             if (!result.isSuccessful) {
                 errored = true
                 val errorMsg = result.errorBody()?.string().orEmpty()
-                message = "Error code: ${result.code()}. Error: $errorMsg"
+                response = "Error code: ${result.code()}. Error: $errorMsg"
+            } else {
+                response = result.body()?.message!!
             }
         } catch (e: Exception) {
             errored = true
-            message =  "Failure: ${e.message}"
+            response =  "Failure: ${e.message}"
         }
-
+        Log.d("SmsSender", response)
         if (errored){
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Failure: $message", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Failure: $response", Toast.LENGTH_LONG).show()
             }
         }
 

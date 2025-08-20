@@ -58,7 +58,7 @@ object RetrofitClient {
         url: String,
         data: Req,
         apiServiceFun: suspend (String, Req) -> Response<Res>): String {
-        return try {
+        val message =  try {
             val response = apiServiceFun(url, data)
             if (response.isSuccessful) {
                 (response.body() as PostResponse).message
@@ -71,6 +71,9 @@ object RetrofitClient {
             Log.e("RetrofitClient", "Network error", e)
             "Failure: ${e.message}"
         }
+
+        Log.d("RetrofitClient", message)
+        return message
     }
 
     suspend fun uploadFCMToServer(context: Context, fcmToken: String): String {
