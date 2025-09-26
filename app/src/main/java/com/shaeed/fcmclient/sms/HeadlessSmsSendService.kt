@@ -6,6 +6,8 @@ import android.os.IBinder
 import android.telephony.SmsManager
 import android.util.Log
 import android.net.Uri
+import android.os.Build
+import android.telephony.SubscriptionManager
 
 class HeadlessSmsSendService : Service() {
 
@@ -30,8 +32,24 @@ class HeadlessSmsSendService : Service() {
 
             if (!phoneNumber.isNullOrBlank() && !messageBody.isNullOrBlank()) {
                 try {
-                    val smsManager = SmsManager.getDefault()
-                    smsManager.sendTextMessage(phoneNumber, null, messageBody, null, null)
+                    // val smsManager = SmsManager.getDefault()
+
+                    val smsManager: SmsManager? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        // API 31+ (Android 12)
+                        val subscriptionId = SubscriptionManager.getDefaultSmsSubscriptionId()
+                        getSystemService(SmsManager::class.java)?.createForSubscriptionId(subscriptionId)
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                        // API 22–30
+                        val subscriptionId = SubscriptionManager.getDefaultSmsSubscriptionId()
+                        @Suppress("DEPRECATION")
+                        SmsManager.getSmsManagerForSubscriptionId(subscriptionId)
+                    } else {
+                        // API < 22
+                        @Suppress("DEPRECATION")
+                        SmsManager.getDefault()
+                    }
+
+                    smsManager?.sendTextMessage(phoneNumber, null, messageBody, null, null)
                     Log.d(TAG, "SMS sent successfully to $phoneNumber")
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to send SMS: ${e.message}", e)

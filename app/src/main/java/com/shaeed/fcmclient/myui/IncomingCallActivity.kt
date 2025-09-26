@@ -9,7 +9,7 @@ import com.shaeed.fcmclient.data.addCallerToDb
 class IncomingCallActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        overridePendingTransition(0, 0)
+        // overridePendingTransition(0, 0)
         Log.d("IncomingCallActivity", "Incoming call notification tapped")
 
         // Get data from the Intent

@@ -63,9 +63,7 @@ object ContactHelper {
                 val name = cursor.getString(nameIndex)
                 val rawNumber = cursor.getString(numberIndex)
                 val normalized = normalizeNumber(rawNumber)
-                if (normalized != null) {
-                    map[normalized] = name
-                }
+                map[normalized] = name
             }
         }
         return map
