@@ -1,5 +1,5 @@
 [versions]
-agp = "8.11.1"
+agp = "8.11.2"
 annotations = "26.0.2"
 converterGson = "3.0.0"
 kotlin = "2.2.0"

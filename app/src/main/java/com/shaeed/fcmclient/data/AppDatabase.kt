@@ -32,8 +32,8 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("""
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
             CREATE TABLE IF NOT EXISTS `sms_log` (
                 `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 `from` TEXT NOT NULL,
@@ -45,8 +45,8 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("""
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
             CREATE TABLE IF NOT EXISTS `messages` (
                 `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 `sender` TEXT NOT NULL,

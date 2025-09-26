@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.provider.Telephony
 import android.telephony.SmsMessage
 import android.telephony.SubscriptionManager
@@ -21,7 +22,14 @@ class SmsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
             val bundle = intent.extras
-            val pdus = bundle?.get("pdus") as? Array<*>
+            // val pdus = bundle?.get("pdus") as? Array<*>
+            val pdus = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                bundle?.getSerializable("pdus", Array<ByteArray>::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                bundle?.get("pdus") as? Array<*>
+            }
+
             val format = bundle?.getString("format")
             val subscriptionId = bundle?.getInt("subscription", -1)
             Log.d("SmsReceiver", "SMS received on subscriptionId: $subscriptionId")

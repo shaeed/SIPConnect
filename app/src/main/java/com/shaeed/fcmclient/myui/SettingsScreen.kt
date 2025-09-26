@@ -1,8 +1,9 @@
 package com.shaeed.fcmclient.myui
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,13 +36,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.messaging.FirebaseMessaging
@@ -59,8 +59,8 @@ import kotlinx.coroutines.withContext
 fun SettingsScreen(navController: NavController) {
     val token = getFCMToken()
     var serverResponse by remember { mutableStateOf("") }
-    val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
+    val rememberCoroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO){ checkAndReregister(context) }
@@ -113,8 +113,12 @@ fun SettingsScreen(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = {
-                        clipboardManager.setText(AnnotatedString(token))
-                        Toast.makeText(context, "Token copied", Toast.LENGTH_SHORT).show()
+                        rememberCoroutineScope.launch {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("Token", token)
+                            clipboard.setPrimaryClip(clip)
+                        }
+
                     }) {
                         Text("Copy Token")
                     }
