@@ -4,26 +4,35 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.telephony.SmsManager
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresPermission
+import com.shaeed.fcmclient.data.AppMode
 import com.shaeed.fcmclient.data.DeliveryStatus
+import com.shaeed.fcmclient.data.PrefKeys
+import com.shaeed.fcmclient.data.SharedPreferences
 import com.shaeed.fcmclient.data.SmsRepository
 import com.shaeed.fcmclient.network.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object SmsSender {
+    /**
+     * Send GSM message (either via SIP server or app (in server mode)).
+     */
     suspend fun send(context: Context, to: String, body: String) {
-        // val smsManager = SmsManager.getDefault()
-        // smsManager.sendTextMessage(to, null, message, null, null)
-
         var errored = false
         val messageID = SmsRepository.insertOutgoingMessage(context, to, body, System.currentTimeMillis())
         var response = ""
+
+        if(SharedPreferences.getKeyValue(context, PrefKeys.APP_MODE) == AppMode.SERVER) {
+            return sendSmsViaGsm(context, to, body)
+        }
+
         try {
             val result = RetrofitClient.sendGsmSms(context, to, body)
             if (!result.isSuccessful) {
@@ -48,15 +57,24 @@ object SmsSender {
         SmsRepository.updateDeliveryStatus(context, messageID, status)
     }
 
-    fun sendSms(
+    fun sendSmsViaGsm(
         context: Context,
         to: String,
         body: String,
         subscriptionId: Int? = null  // Pass SIM slot if needed
     ) {
-        val smsManager = if (subscriptionId != null) {
+        val smsManager: SmsManager? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // API 31+ (Android 12)
+            val subscriptionId = SubscriptionManager.getDefaultSmsSubscriptionId()
+            context.getSystemService(SmsManager::class.java)?.createForSubscriptionId(subscriptionId)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            // API 22–30
+            val subscriptionId = SubscriptionManager.getDefaultSmsSubscriptionId()
+            @Suppress("DEPRECATION")
             SmsManager.getSmsManagerForSubscriptionId(subscriptionId)
         } else {
+            // API < 22
+            @Suppress("DEPRECATION")
             SmsManager.getDefault()
         }
 
@@ -72,8 +90,7 @@ object SmsSender {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        smsManager.sendTextMessage(to, null, body, sentIntent, deliveredIntent)
-
+        smsManager?.sendTextMessage(to, null, body, sentIntent, deliveredIntent)
         Log.d("SmsSender", "Sent SMS to $to via SIM: $subscriptionId")
     }
 

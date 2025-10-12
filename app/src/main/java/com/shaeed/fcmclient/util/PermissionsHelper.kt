@@ -14,11 +14,13 @@ import androidx.core.content.ContextCompat
 
 object PermissionsHelper {
     val REQUIRED_PERMISSIONS = arrayOf(
-//        Manifest.permission.RECEIVE_SMS,
-//        Manifest.permission.SEND_SMS,
-//        Manifest.permission.READ_SMS,
+        // SMS Manager Start
+        Manifest.permission.RECEIVE_SMS,
+        Manifest.permission.SEND_SMS,
+        Manifest.permission.READ_SMS,
+        Manifest.permission.READ_PHONE_STATE,
+        // SMS Manager End
         Manifest.permission.READ_CONTACTS,
-//        Manifest.permission.READ_PHONE_STATE
     )
 
     fun allGranted(context: Context): Boolean {

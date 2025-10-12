@@ -86,19 +86,14 @@ fun NewMessageScreen(
                     Column {
                         matchingContacts.forEach { (number, name) ->
                             TextButton(
-                                onClick = {
-                                    recipient = number
-                                },
+                                onClick = { recipient = number },
                                 modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("$name ($number)")
-                            }
+                            ) { Text("$name ($number)") }
                         }
                     }
                 }
 
                 Spacer(Modifier.height(16.dp))
-
                 Text("Message:", style = MaterialTheme.typography.labelMedium)
                 TextField(
                     value = message,
@@ -122,9 +117,7 @@ fun NewMessageScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = recipient.isNotBlank() && message.isNotBlank() && canSend
-            ) {
-                Text("Send")
-            }
+            ) { Text("Send") }
         }
     }
 }

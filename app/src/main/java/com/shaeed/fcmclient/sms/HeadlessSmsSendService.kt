@@ -3,14 +3,13 @@ package com.shaeed.fcmclient.sms
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.telephony.SmsManager
 import android.util.Log
 import android.net.Uri
-import android.os.Build
-import android.telephony.SubscriptionManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class HeadlessSmsSendService : Service() {
-
     companion object {
         private const val TAG = "HeadlessSmsSendService"
         private const val ACTION_RESPOND_VIA_MESSAGE = "android.intent.action.RESPOND_VIA_MESSAGE"
@@ -19,8 +18,6 @@ class HeadlessSmsSendService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(TAG, "Service started with intent: $intent")
-
         if (intent != null && intent.action == ACTION_RESPOND_VIA_MESSAGE) {
             val uri: Uri? = intent.data
             val extras = intent.extras
@@ -31,34 +28,13 @@ class HeadlessSmsSendService : Service() {
             Log.d(TAG, "Quick reply received for: $phoneNumber with message: $messageBody")
 
             if (!phoneNumber.isNullOrBlank() && !messageBody.isNullOrBlank()) {
-                try {
-                    // val smsManager = SmsManager.getDefault()
-
-                    val smsManager: SmsManager? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        // API 31+ (Android 12)
-                        val subscriptionId = SubscriptionManager.getDefaultSmsSubscriptionId()
-                        getSystemService(SmsManager::class.java)?.createForSubscriptionId(subscriptionId)
-                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                        // API 22–30
-                        val subscriptionId = SubscriptionManager.getDefaultSmsSubscriptionId()
-                        @Suppress("DEPRECATION")
-                        SmsManager.getSmsManagerForSubscriptionId(subscriptionId)
-                    } else {
-                        // API < 22
-                        @Suppress("DEPRECATION")
-                        SmsManager.getDefault()
-                    }
-
-                    smsManager?.sendTextMessage(phoneNumber, null, messageBody, null, null)
-                    Log.d(TAG, "SMS sent successfully to $phoneNumber")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to send SMS: ${e.message}", e)
+                CoroutineScope(Dispatchers.IO).launch {
+                    val context = this@HeadlessSmsSendService
+                    SmsSender.send(context, phoneNumber, messageBody)
                 }
-            } else {
-                Log.w(TAG, "Phone number or message is null/blank. Skipping.")
+
+                Log.d(TAG, "SMS sent successfully to $phoneNumber")
             }
-        } else {
-            Log.d(TAG, "Intent action is not RESPOND_VIA_MESSAGE. Ignored.")
         }
 
         stopSelf()

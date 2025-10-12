@@ -3,6 +3,8 @@ package com.shaeed.fcmclient.network
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import com.shaeed.fcmclient.GlobalConfig
+import com.shaeed.fcmclient.data.AppMode
 import com.shaeed.fcmclient.data.PerfValues
 import com.shaeed.fcmclient.data.PrefKeys
 import com.shaeed.fcmclient.data.SharedPreferences
@@ -82,9 +84,20 @@ object RetrofitClient {
         val url = "http://$server/sip/client/register"
         Log.d("RetrofitClient", "URL: $url")
 
-        val message =  handleRetrofitCall(url, request, apiService::registerDeviceOnServer)
+        var message =  handleRetrofitCall(url, request, apiService::registerDeviceOnServer)
         val regStatus = if (message.contains("token updated")) PerfValues.YES else PerfValues.NO
         SharedPreferences.saveKeyValue(context, PrefKeys.REGISTRATION_STATUS, regStatus)
+
+        if(GlobalConfig.compileMode == AppMode.SMS_MANAGER) {
+            if(SharedPreferences.getKeyValue(context, PrefKeys.APP_MODE) == AppMode.SERVER) {
+                val username2 = SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER2)
+                val request = RegisterDevice(deviceId, username2, fcmToken)
+                val url = "http://$server/sip/client/register"
+                Log.d("RetrofitClient", "URL: $url")
+
+                message +=  handleRetrofitCall(url, request, apiService::registerDeviceOnServer)
+            }
+        }
 
         return message
     }

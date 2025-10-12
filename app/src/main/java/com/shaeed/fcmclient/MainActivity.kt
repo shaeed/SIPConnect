@@ -7,15 +7,20 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
+import androidx.core.app.ActivityCompat
 import androidx.navigation.compose.rememberNavController
+import com.shaeed.fcmclient.data.AppMode
 import com.shaeed.fcmclient.myui.MainScreen
+import com.shaeed.fcmclient.sms.DefaultSmsHelper
 import com.shaeed.fcmclient.ui.theme.SIPConnectTheme
 import com.shaeed.fcmclient.util.PermissionsHelper
+import android.app.role.RoleManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,9 +28,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         createNotificationChannels(this)
 
-//        if (!DefaultSmsHelper.isDefaultSmsApp(this)) {
-//            DefaultSmsHelper.requestDefaultSmsApp(this)
-//        }
+        if (!DefaultSmsHelper.isDefaultSmsApp(this)) {
+            DefaultSmsHelper.requestDefaultSmsApp(this)
+        }
 
         setContent {
             SIPConnectTheme {
@@ -41,6 +46,14 @@ class MainActivity : ComponentActivity() {
                 MainScreen(navController)
             }
             PermissionsHelper.RequestAllPermissionsIfNeeded()
+            ActivityCompat.requestPermissions(this, PermissionsHelper.REQUIRED_PERMISSIONS, 1)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val roleManager = getSystemService(RoleManager::class.java)
+                if (!roleManager.isRoleHeld(RoleManager.ROLE_SMS)) {
+                    startActivity(roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS))
+                }
+            }
         }
     }
 
@@ -97,4 +110,9 @@ fun createNotificationChannels(context: Context) {
         lockscreenVisibility = Notification.VISIBILITY_PUBLIC
     }
     nm.createNotificationChannel(defaultChannel)
+}
+
+object GlobalConfig {
+    var compileMode: String = AppMode.SMS_MANAGER
+    // var appMode: String = AppMode.NORMAL
 }

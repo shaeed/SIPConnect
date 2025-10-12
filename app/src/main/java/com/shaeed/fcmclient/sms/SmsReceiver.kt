@@ -11,6 +11,9 @@ import android.telephony.SmsMessage
 import android.telephony.SubscriptionManager
 import android.util.Log
 import androidx.annotation.RequiresPermission
+import com.shaeed.fcmclient.data.AppMode
+import com.shaeed.fcmclient.data.PrefKeys
+import com.shaeed.fcmclient.data.SharedPreferences
 import com.shaeed.fcmclient.data.SmsRepository
 import com.shaeed.fcmclient.network.RetrofitClient
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +23,7 @@ import kotlinx.coroutines.launch
 class SmsReceiver : BroadcastReceiver() {
     @SuppressLint("MissingPermission")
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
+        if (intent.action == Telephony.Sms.Intents.SMS_DELIVER_ACTION) {
             val bundle = intent.extras
             // val pdus = bundle?.get("pdus") as? Array<*>
             val pdus = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -40,13 +43,15 @@ class SmsReceiver : BroadcastReceiver() {
                 val body = sms.displayMessageBody
                 val timestamp = sms.timestampMillis
 
-                //val slot = getSimSlot(context, subscriptionId)
-                Log.d("SmsReceiver", "subscriptionId: $subscriptionId. From: $sender Message: $body Slot: slot")
+                val slot = getSimSlot(context, subscriptionId)
+                Log.d("SmsReceiver", "subscriptionId: $subscriptionId, Slot: $slot. From: $sender Message: $body")
 
                 CoroutineScope(Dispatchers.IO).launch {
+                    if(SharedPreferences.getKeyValue(context, PrefKeys.APP_MODE) == AppMode.SERVER) {
+                        val result = RetrofitClient.sendSmsAlert(context, sender, body)
+                        Log.d("SmsReceiver", result)
+                    }
                     SmsRepository.insertGsmMessage(context, sender, body, timestamp, subscriptionId)
-                    val result = RetrofitClient.sendSmsAlert(context, sender, body)
-                    Log.d("SmsReceiver", result)
                 }
             }
         }
@@ -67,4 +72,3 @@ class SmsReceiver : BroadcastReceiver() {
         return -1
     }
 }
-
