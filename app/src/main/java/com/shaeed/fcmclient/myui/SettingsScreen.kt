@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +28,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -38,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -45,6 +48,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.messaging.FirebaseMessaging
+import com.shaeed.fcmclient.GlobalConfig
+import com.shaeed.fcmclient.data.AppMode
 import com.shaeed.fcmclient.network.RetrofitClient
 import com.shaeed.fcmclient.data.PrefKeys
 import com.shaeed.fcmclient.data.SharedPreferences
@@ -140,12 +145,41 @@ fun SettingsScreen(navController: NavController) {
                     var username by remember {
                         mutableStateOf(SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER))
                     }
-                    var userPass by remember {
-                        mutableStateOf(SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_PASS))
+//                    var userPass by remember {
+//                        mutableStateOf(SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_PASS))
+//                    }
+                    var username2 by remember {
+                        mutableStateOf(SharedPreferences.getKeyValue(context, PrefKeys.SIP_SERVER_USER2))
+                    }
+                    var selectedMode by remember {
+                        mutableStateOf(SharedPreferences.getKeyValue(context, PrefKeys.APP_MODE))
                     }
 
                     Text("Server Configuration", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
+
+                    if(GlobalConfig.compileMode == AppMode.SMS_MANAGER) {
+                        Text("App Mode", style = MaterialTheme.typography.titleMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            RadioButton(
+                                selected = selectedMode == AppMode.SERVER,
+                                onClick = { selectedMode = AppMode.SERVER }
+                            )
+                            Text("Server", modifier = Modifier.padding(start = 8.dp))
+                            Spacer(modifier = Modifier.weight(1f))
+                            RadioButton(
+                                selected = selectedMode == AppMode.CLIENT,
+                                onClick = { selectedMode = AppMode.CLIENT }
+                            )
+                            Text("Client", modifier = Modifier.padding(start = 8.dp))
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
 
                     TextField(
                         value = ipAddress,
@@ -163,18 +197,30 @@ fun SettingsScreen(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    TextField(
-                        value = userPass,
-                        onValueChange = { userPass = it },
-                        label = { Text("SIP Password") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+//                    TextField(
+//                        value = userPass,
+//                        onValueChange = { userPass = it },
+//                        label = { Text("SIP Password") },
+//                        modifier = Modifier.fillMaxWidth()
+//                    )
+//                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if(GlobalConfig.compileMode == AppMode.SMS_MANAGER && selectedMode == AppMode.SERVER) {
+                        TextField(
+                            value = username2,
+                            onValueChange = { username2 = it },
+                            label = { Text("SIP username 2") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
 
                     Button(onClick = {
+                        SharedPreferences.saveKeyValue(context, PrefKeys.APP_MODE, selectedMode)
                         SharedPreferences.saveKeyValue(context, PrefKeys.IP_ADDRESS, ipAddress)
                         SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_USER, username)
-                        SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_PASS, userPass)
+                        SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_USER2, username2)
+                        // SharedPreferences.saveKeyValue(context, PrefKeys.SIP_SERVER_PASS, userPass)
                         CoroutineScope(Dispatchers.IO).launch {
                             serverResponse = RetrofitClient.uploadFCMToServer(context, token)
                         }
@@ -220,9 +266,7 @@ fun SettingsScreen(navController: NavController) {
                                 " Restarting it will end any active call connected.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .fillMaxWidth()
+                        modifier = Modifier.padding(8.dp).fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(

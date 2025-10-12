@@ -8,9 +8,13 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.shaeed.fcmclient.data.AppMode
+import com.shaeed.fcmclient.data.PrefKeys
+import com.shaeed.fcmclient.data.SharedPreferences
 import com.shaeed.fcmclient.data.SmsRepository
 import com.shaeed.fcmclient.data.addCallerToDb
 import com.shaeed.fcmclient.myui.IncomingCallActivity
+import com.shaeed.fcmclient.sms.SmsSender
 import com.shaeed.fcmclient.util.ContactHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -115,16 +119,28 @@ class MyFirebaseService : FirebaseMessagingService() {
     private fun showIncomingSmsNotification(data: Map<String, String>) {
         val from = data["phone_number"] ?: "Unknown"
         val body = data["body"] ?: ""
+        val isOutgoingGsm = data["forward_to_gsm"]?.toBoolean() ?: false
         val fromNormalized = ContactHelper.normalizeNumber(from)
 
-        // new sms system
+        if(isOutgoingGsm) {
+            if (SharedPreferences.getKeyValue(applicationContext, PrefKeys.APP_MODE) == AppMode.SERVER){
+                CoroutineScope(Dispatchers.IO).launch {
+                    SmsSender.send(applicationContext, from, body)
+                }
+            } else {
+                // outgoing sms via firebase coming to app and app is not in server mode
+                // don't show this notification to user or register in the app
+                Log.d("FCM", "GSM targeted message received on client.")
+            }
+            return
+        }
+
         CoroutineScope(Dispatchers.IO).launch {
             SmsRepository.insertFirebaseMessage(applicationContext, from, body, System.currentTimeMillis())
         }
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            // putExtra("destination", "inbox")
             putExtra("destination", "conversation/$from/$fromNormalized")
         }
         val pendingIntent = PendingIntent.getActivity(
