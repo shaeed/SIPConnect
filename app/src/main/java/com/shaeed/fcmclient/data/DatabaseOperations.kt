@@ -18,14 +18,14 @@ fun addSmsToDb(from: String, body: String, applicationContext: Context){
     }
 }
 
-fun addCallerToDb(phoneNumber: String, status: String, applicationContext: Context){
+fun addCallerToDb(phoneNumber: String, status: String, timestamp: Long, applicationContext: Context){
     CoroutineScope(Dispatchers.IO).launch {
         val normalizeNumber = normalizeNumber(phoneNumber)
         val db = AppDatabase.getDatabase(applicationContext)
         val callLog = CallLog(
             phoneNumber = phoneNumber,
             normalizedNumber = normalizeNumber,
-            timestamp = System.currentTimeMillis(),
+            timestamp = timestamp,
             status = status // missed or Incoming
         )
         db.callLogDao().insert(callLog)

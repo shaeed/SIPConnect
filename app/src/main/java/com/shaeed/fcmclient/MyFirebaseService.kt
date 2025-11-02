@@ -16,6 +16,7 @@ import com.shaeed.fcmclient.data.addCallerToDb
 import com.shaeed.fcmclient.myui.IncomingCallActivity
 import com.shaeed.fcmclient.sms.SmsSender
 import com.shaeed.fcmclient.util.ContactHelper
+import com.shaeed.fcmclient.util.UtilFunctions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,6 +24,8 @@ import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 class MyFirebaseService : FirebaseMessagingService() {
+    val INCOMING_CALL_NOTIFICATION_ID = 1001
+
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
@@ -64,6 +67,7 @@ class MyFirebaseService : FirebaseMessagingService() {
 
         val intent = Intent(this, IncomingCallActivity::class.java).apply {
             putExtra("from", from)
+            putExtra("timestamp", data["timestamp"])
         }
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -84,12 +88,17 @@ class MyFirebaseService : FirebaseMessagingService() {
             .build()
 
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(Random.nextInt(), notification)
+        notificationManager.notify(INCOMING_CALL_NOTIFICATION_ID, notification)
     }
 
     private fun showMissedCallNotification(data: Map<String, String>) {
         val from = data["phone_number"] ?: "Unknown"
-        addCallerToDb(from, "Missed", applicationContext)
+        val timestamp = UtilFunctions.isoToMillis(data["timestamp"] ?: "unknown")
+        addCallerToDb(from, "Missed", timestamp, applicationContext)
+
+        // Cancel the ongoing incoming call notification
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(INCOMING_CALL_NOTIFICATION_ID)
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -112,7 +121,7 @@ class MyFirebaseService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .build()
 
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        // Missed call still use random ID to show multiple missed call notifications
         notificationManager.notify(Random.nextInt(), notification)
     }
 
@@ -120,7 +129,9 @@ class MyFirebaseService : FirebaseMessagingService() {
         val from = data["phone_number"] ?: "Unknown"
         val body = data["body"] ?: ""
         val isOutgoingGsm = data["forward_to_gsm"]?.toBoolean() ?: false
+        val timestamp = UtilFunctions.isoToMillis(data["timestamp"] ?: "unknown")
         val fromNormalized = ContactHelper.normalizeNumber(from)
+        val notificationId = fromNormalized.hashCode()
 
         if(isOutgoingGsm) {
             if (SharedPreferences.getKeyValue(applicationContext, PrefKeys.APP_MODE) == AppMode.SERVER){
@@ -136,7 +147,7 @@ class MyFirebaseService : FirebaseMessagingService() {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            SmsRepository.insertFirebaseMessage(applicationContext, from, body, System.currentTimeMillis())
+            SmsRepository.insertFirebaseMessage(applicationContext, from, body, timestamp)
         }
 
         val intent = Intent(this, MainActivity::class.java).apply {
@@ -144,7 +155,7 @@ class MyFirebaseService : FirebaseMessagingService() {
             putExtra("destination", "conversation/$from/$fromNormalized")
         }
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            this, notificationId, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val contactName = runBlocking {
@@ -160,7 +171,7 @@ class MyFirebaseService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .build()
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(Random.nextInt(), notification)
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(notificationId, notification)
     }
 }
