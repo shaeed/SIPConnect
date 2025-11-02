@@ -48,6 +48,21 @@
             </intent-filter>
             <!-- SMS Manager End -->
         </activity>
+        <!-- SMS Manager Start -->
+        <activity
+            android:name=".myui.sms.ComposeSmsActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Transparent"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="sms"/>
+                <data android:scheme="smsto"/>
+            </intent-filter>
+        </activity>
+        <!-- SMS Manager End -->
         <activity
             android:name=".myui.IncomingCallActivity"
             android:theme="@style/Theme.Transparent"/>
@@ -84,6 +99,14 @@
                 <data android:scheme="smsto"/>
                 <data android:scheme="mms"/>
                 <data android:scheme="mmsto"/>
+            </intent-filter>
+        </service>
+        <service
+            android:name=".sms.SmsSendService"
+            android:permission="android.permission.BROADCAST_SMS"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_SMS"/>
             </intent-filter>
         </service>
         <!-- SMS Manager End -->

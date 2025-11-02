@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
             PermissionsHelper.RequestAllPermissionsIfNeeded()
             ActivityCompat.requestPermissions(this, PermissionsHelper.REQUIRED_PERMISSIONS, 1)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && GlobalConfig.compileMode == AppMode.SMS_MANAGER) {
                 val roleManager = getSystemService(RoleManager::class.java)
                 if (!roleManager.isRoleHeld(RoleManager.ROLE_SMS)) {
                     startActivity(roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS))
@@ -113,6 +113,6 @@ fun createNotificationChannels(context: Context) {
 }
 
 object GlobalConfig {
-    var compileMode: String = AppMode.SMS_MANAGER
+    var compileMode: String = AppMode.SMS_MANAGER // AppMode.NORMAL // AppMode.SMS_MANAGER
     // var appMode: String = AppMode.NORMAL
 }

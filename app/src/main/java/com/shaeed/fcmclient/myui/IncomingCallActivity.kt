@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.shaeed.fcmclient.data.addCallerToDb
+import com.shaeed.fcmclient.util.UtilFunctions
 
 class IncomingCallActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,7 +15,9 @@ class IncomingCallActivity: AppCompatActivity() {
 
         // Get data from the Intent
         val from = intent.getStringExtra("from") ?: "Unknown"
-        addCallerToDb(from, "Incoming", applicationContext)
+        val timestampStr = intent.getStringExtra("timestamp") ?: "unknown"
+        val timestamp = UtilFunctions.isoToMillis(timestampStr)
+        addCallerToDb(from, "Incoming", timestamp, applicationContext)
 
         // launch ZoiPer
         val packageName = "com.zoiper.android.app"

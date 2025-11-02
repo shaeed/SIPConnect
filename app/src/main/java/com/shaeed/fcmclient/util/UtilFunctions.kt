@@ -6,6 +6,8 @@ import com.shaeed.fcmclient.data.PerfValues
 import com.shaeed.fcmclient.data.PrefKeys
 import com.shaeed.fcmclient.data.SharedPreferences
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.format.DateTimeParseException
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -26,6 +28,15 @@ object UtilFunctions {
         } else {
             val dateTimeFormat = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
             dateTimeFormat.format(Date(timestamp))
+        }
+    }
+
+    fun isoToMillis(isoTimestamp: String): Long {
+        return try {
+            Instant.parse(isoTimestamp).toEpochMilli()
+        } catch (e: DateTimeParseException) {
+            e.printStackTrace()
+            System.currentTimeMillis()
         }
     }
 

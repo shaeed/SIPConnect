@@ -3,7 +3,6 @@ package com.shaeed.fcmclient.myui.sms
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -69,98 +67,6 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConversationScreenO(
-    navController: NavController,
-    senderNormalized: String,
-    viewModel: ConversationViewModel = viewModel()
-) {
-    val messages by viewModel.getMessages(senderNormalized).collectAsState(emptyList())
-    val listState = rememberLazyListState()
-    val contactViewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(LocalContext.current))
-    val phonebook by contactViewModel.phonebook.collectAsState()
-    val contactName = phonebook[senderNormalized] ?: senderNormalized
-
-    // Show only last 50 messages
-    val displayMessages = remember(messages) {
-        if (messages.size > 50) messages.takeLast(20) else messages
-    }
-
-    // Auto-scroll when new messages arrive if user is near bottom
-    LaunchedEffect(displayMessages.size) {
-        if (displayMessages.isNotEmpty() &&
-            listState.firstVisibleItemIndex >= displayMessages.size - 5) {
-            listState.animateScrollToItem(displayMessages.lastIndex)
-        }
-    }
-
-    LaunchedEffect(senderNormalized) { viewModel.markAsRead(senderNormalized) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(contactName) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            var showDeleteDialog by remember { mutableStateOf<Pair<Boolean, Long?>>(false to null) }
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                state = listState,
-                contentPadding = PaddingValues(8.dp)
-            ) {
-                items(displayMessages, key = { it.id }) { msg ->
-                    MessageBubble(
-                        message = msg,
-                        onLongPress = { showDeleteDialog = true to msg.id }
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-            }
-
-            if (showDeleteDialog.first) {
-                AlertDialog(
-                    onDismissRequest = { showDeleteDialog = false to null },
-                    title = { Text("Delete Message") },
-                    text = { Text("Are you sure you want to delete this message?") },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            showDeleteDialog.second?.let { id ->
-                                viewModel.deleteMessage(id)
-                            }
-                            showDeleteDialog = false to null
-                        }) { Text("Delete") }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDeleteDialog = false to null }) {
-                            Text("Cancel")
-                        }
-                    }
-                )
-            }
-
-            ComposeMessageBar(
-                onSend = { text ->
-                    CoroutineScope(Dispatchers.IO).launch {
-                        viewModel.sendMessage(messages[0].sender, text)
-                    }
-                }
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 fun ConversationScreen(
     navController: NavController,
     senderNormalized: String,
@@ -173,6 +79,9 @@ fun ConversationScreen(
     val contactViewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(LocalContext.current))
     val phonebook by contactViewModel.phonebook.collectAsState()
     val contactName = phonebook[senderNormalized] ?: sender
+
+    // Mark all messages as read
+    LaunchedEffect(senderNormalized) { viewModel.markAsRead(senderNormalized) }
 
     // We track first load so we can start scrolled to bottom
     var initialScrollDone by remember { mutableStateOf(false) }
@@ -248,7 +157,6 @@ fun ConversationScreen(
             ) {
                 items(
                     count = messages.itemCount,
-                    // key = { idx -> messages[idx]?.id ?: idx }
                     key = { idx -> messages[idx]?.id ?: idx }
                 ) { idx ->
                     messages[idx]?.let { msg ->
