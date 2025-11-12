@@ -37,16 +37,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- SMS Manager Start -->
-            <intent-filter>
-                <action android:name="android.intent.action.SENDTO" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="sms" />
-                <data android:scheme="smsto" />
-                <data android:scheme="mms" />
-                <data android:scheme="mmsto" />
-            </intent-filter>
-            <!-- SMS Manager End -->
         </activity>
         <!-- SMS Manager Start -->
         <activity
@@ -60,6 +50,8 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:scheme="sms"/>
                 <data android:scheme="smsto"/>
+                <data android:scheme="mms" />
+                <data android:scheme="mmsto" />
             </intent-filter>
         </activity>
         <!-- SMS Manager End -->
