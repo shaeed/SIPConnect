@@ -76,6 +76,18 @@ class MyFirebaseService : FirebaseMessagingService() {
         val contactName = runBlocking {
             ContactHelper.getContactName(applicationContext, from)
         }
+
+        val dismissIntent = Intent(this, NotificationActionReceiver::class.java).apply {
+            action = NotificationActionReceiver.ACTION_DISMISS_CALL
+            putExtra(NotificationActionReceiver.EXTRA_PHONE_NUMBER, from)
+            putExtra(NotificationActionReceiver.EXTRA_TIMESTAMP, data["timestamp"])
+            putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, INCOMING_CALL_NOTIFICATION_ID)
+        }
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            this, INCOMING_CALL_NOTIFICATION_ID + 1, dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(this, "incoming_call_channel")
             .setSmallIcon(android.R.drawable.sym_call_incoming)
             .setContentTitle("Incoming Call")
@@ -86,6 +98,7 @@ class MyFirebaseService : FirebaseMessagingService() {
             .setFullScreenIntent(pendingIntent, true)
             .setAutoCancel(true)
             .setOngoing(true)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
             .build()
 
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
