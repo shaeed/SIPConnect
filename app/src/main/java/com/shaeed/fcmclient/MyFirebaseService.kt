@@ -161,6 +161,27 @@ class MyFirebaseService : FirebaseMessagingService() {
         val contactName = runBlocking {
             ContactHelper.getContactName(applicationContext, from)
         }
+
+        val deleteIntent = Intent(this, NotificationActionReceiver::class.java).apply {
+            action = NotificationActionReceiver.ACTION_DELETE
+            putExtra(NotificationActionReceiver.EXTRA_SENDER_NORMALIZED, fromNormalized)
+            putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+        }
+        val deletePendingIntent = PendingIntent.getBroadcast(
+            this, notificationId + 1, deleteIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val markReadIntent = Intent(this, NotificationActionReceiver::class.java).apply {
+            action = NotificationActionReceiver.ACTION_MARK_READ
+            putExtra(NotificationActionReceiver.EXTRA_SENDER_NORMALIZED, fromNormalized)
+            putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+        }
+        val markReadPendingIntent = PendingIntent.getBroadcast(
+            this, notificationId + 2, markReadIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(this, "sms_channel")
             .setSmallIcon(android.R.drawable.sym_action_email)
             .setContentTitle("SMS from $contactName")
@@ -169,6 +190,8 @@ class MyFirebaseService : FirebaseMessagingService() {
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .addAction(android.R.drawable.ic_menu_delete, "Delete", deletePendingIntent)
+            .addAction(android.R.drawable.ic_menu_view, "Mark as Read", markReadPendingIntent)
             .build()
 
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager

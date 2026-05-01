@@ -102,6 +102,12 @@
             </intent-filter>
         </service>
         <!-- SMS Manager End -->
+        <receiver android:name=".NotificationActionReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="com.shaeed.fcmclient.ACTION_SMS_DELETE" />
+                <action android:name="com.shaeed.fcmclient.ACTION_SMS_MARK_READ" />
+            </intent-filter>
+        </receiver>
     </application>
     <queries>
         <!-- SMS Manager Start -->
