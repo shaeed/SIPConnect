@@ -23,6 +23,11 @@ roomPaging = "2.7.2"
 roomRuntime = "2.7.2"
 roomRuntimeAndroid = "2.7.2"
 ksp = "2.2.0-2.0.2"
+mockk = "1.13.12"
+coroutinesTest = "1.9.0"
+turbine = "1.2.0"
+robolectric = "4.13"
+androidxTestCore = "1.6.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -54,6 +59,12 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
 libphonenumber = { module = "com.googlecode.libphonenumber:libphonenumber", version.ref = "libphonenumber" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "roomRuntime" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 
 [plugins]
