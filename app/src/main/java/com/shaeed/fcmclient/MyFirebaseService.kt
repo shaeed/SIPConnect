@@ -20,7 +20,6 @@ import com.shaeed.fcmclient.util.UtilFunctions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 class MyFirebaseService : FirebaseMessagingService() {
@@ -147,54 +146,54 @@ class MyFirebaseService : FirebaseMessagingService() {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            SmsRepository.insertFirebaseMessage(applicationContext, from, body, timestamp)
+            val messageId = SmsRepository.insertFirebaseMessage(applicationContext, from, body, timestamp)
+            val contactName = ContactHelper.getContactName(applicationContext, from)
+            val otp = UtilFunctions.extractOtp(body)
+            val collapsedText = if (otp != null) "OTP: ${UtilFunctions.formatOtp(otp)}" else body
+
+            val openIntent = Intent(applicationContext, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra("destination", "conversation/$from/$fromNormalized")
+            }
+            val openPendingIntent = PendingIntent.getActivity(
+                applicationContext, notificationId, openIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val deleteIntent = Intent(applicationContext, NotificationActionReceiver::class.java).apply {
+                action = NotificationActionReceiver.ACTION_DELETE
+                putExtra(NotificationActionReceiver.EXTRA_MESSAGE_ID, messageId)
+                putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+            }
+            val deletePendingIntent = PendingIntent.getBroadcast(
+                applicationContext, notificationId + 1, deleteIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val markReadIntent = Intent(applicationContext, NotificationActionReceiver::class.java).apply {
+                action = NotificationActionReceiver.ACTION_MARK_READ
+                putExtra(NotificationActionReceiver.EXTRA_SENDER_NORMALIZED, fromNormalized)
+                putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+            }
+            val markReadPendingIntent = PendingIntent.getBroadcast(
+                applicationContext, notificationId + 2, markReadIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val notification = NotificationCompat.Builder(applicationContext, "sms_channel")
+                .setSmallIcon(android.R.drawable.sym_action_email)
+                .setContentTitle("SMS from $contactName")
+                .setContentText(collapsedText)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+                .setContentIntent(openPendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .addAction(android.R.drawable.ic_menu_delete, "Delete", deletePendingIntent)
+                .addAction(android.R.drawable.ic_menu_view, "Mark as Read", markReadPendingIntent)
+                .build()
+
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.notify(notificationId, notification)
         }
-
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("destination", "conversation/$from/$fromNormalized")
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            this, notificationId, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val contactName = runBlocking {
-            ContactHelper.getContactName(applicationContext, from)
-        }
-
-        val deleteIntent = Intent(this, NotificationActionReceiver::class.java).apply {
-            action = NotificationActionReceiver.ACTION_DELETE
-            putExtra(NotificationActionReceiver.EXTRA_SENDER_NORMALIZED, fromNormalized)
-            putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
-        }
-        val deletePendingIntent = PendingIntent.getBroadcast(
-            this, notificationId + 1, deleteIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val markReadIntent = Intent(this, NotificationActionReceiver::class.java).apply {
-            action = NotificationActionReceiver.ACTION_MARK_READ
-            putExtra(NotificationActionReceiver.EXTRA_SENDER_NORMALIZED, fromNormalized)
-            putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
-        }
-        val markReadPendingIntent = PendingIntent.getBroadcast(
-            this, notificationId + 2, markReadIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(this, "sms_channel")
-            .setSmallIcon(android.R.drawable.sym_action_email)
-            .setContentTitle("SMS from $contactName")
-            .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-            .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .addAction(android.R.drawable.ic_menu_delete, "Delete", deletePendingIntent)
-            .addAction(android.R.drawable.ic_menu_view, "Mark as Read", markReadPendingIntent)
-            .build()
-
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(notificationId, notification)
     }
 }
