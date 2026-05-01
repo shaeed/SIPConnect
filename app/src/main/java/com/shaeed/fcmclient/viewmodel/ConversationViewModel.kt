@@ -1,24 +1,21 @@
 package com.shaeed.fcmclient.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.shaeed.fcmclient.data.AppDatabase
 import com.shaeed.fcmclient.data.MessageEntity
-import com.shaeed.fcmclient.sms.SmsSender
+import com.shaeed.fcmclient.data.MessageRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class ConversationViewModel(app: Application) : AndroidViewModel(app) {
-    private val dao = AppDatabase.getDatabase(app).messageDao()
+class ConversationViewModel(private val repository: MessageRepository) : ViewModel() {
 
-    fun getMessages(senderNormalized: String) = dao.getMessagesForSender(senderNormalized)
+    fun getMessages(senderNormalized: String) = repository.getMessagesForSender(senderNormalized)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val pagedMessagesMap = mutableMapOf<String, Flow<PagingData<MessageEntity>>>()
@@ -26,24 +23,21 @@ class ConversationViewModel(app: Application) : AndroidViewModel(app) {
     fun getPagedMessages(senderNormalized: String): Flow<PagingData<MessageEntity>> {
         return pagedMessagesMap.getOrPut(senderNormalized) {
             Pager(
-                config = PagingConfig(
-                    pageSize = 20,
-                    enablePlaceholders = false
-                ),
-                pagingSourceFactory = { dao.getMessagesPage(senderNormalized) }
+                config = PagingConfig(pageSize = 20, enablePlaceholders = false),
+                pagingSourceFactory = { repository.getMessagesPage(senderNormalized) }
             ).flow.cachedIn(viewModelScope)
         }
     }
 
     suspend fun sendMessage(to: String, body: String) {
-        SmsSender.send(getApplication(), to, body)
+        repository.sendMessage(to, body)
     }
 
     fun markAsRead(senderNormalized: String) {
-        viewModelScope.launch { dao.markAsRead(senderNormalized) }
+        viewModelScope.launch { repository.markAsRead(senderNormalized) }
     }
 
     fun deleteMessage(id: Long) {
-        viewModelScope.launch { dao.deleteMessage(id) }
+        viewModelScope.launch { repository.deleteMessage(id) }
     }
 }

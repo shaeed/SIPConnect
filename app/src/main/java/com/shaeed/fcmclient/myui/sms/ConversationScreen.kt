@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.shaeed.fcmclient.viewmodel.ConversationViewModelFactory
 import androidx.navigation.NavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -79,7 +80,7 @@ fun ConversationScreen(
     navController: NavController,
     senderNormalized: String,
     sender: String,
-    viewModel: ConversationViewModel = viewModel()
+    viewModel: ConversationViewModel = viewModel(factory = ConversationViewModelFactory(LocalContext.current))
 ) {
     val messages = viewModel.getPagedMessages(senderNormalized).collectAsLazyPagingItems()
     val listState = rememberLazyListState()
