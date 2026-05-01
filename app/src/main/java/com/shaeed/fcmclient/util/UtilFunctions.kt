@@ -49,4 +49,21 @@ object UtilFunctions {
         val canSend = SharedPreferences.getKeyValue(context, PrefKeys.REGISTRATION_STATUS) == PerfValues.YES
         return canSend
     }
+
+    // Returns the OTP digits if the message looks like an OTP message, null otherwise.
+    fun extractOtp(body: String): String? {
+        val hasKeyword = Regex(
+            "\\b(otp|one[- ]time|verification|verify|passcode|auth\\w*\\s*code)\\b",
+            RegexOption.IGNORE_CASE
+        ).containsMatchIn(body)
+        if (!hasKeyword) return null
+        return Regex("\\b(\\d{4,8})\\b").find(body)?.value
+    }
+
+    // Groups OTP digits for readability: 6-digit → "123 456", 8-digit → "1234 5678".
+    fun formatOtp(otp: String): String = when (otp.length) {
+        in 5..6 -> otp.chunked(3).joinToString(" ")
+        in 7..8 -> otp.chunked(4).joinToString(" ")
+        else -> otp
+    }
 }
