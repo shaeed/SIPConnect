@@ -6,12 +6,12 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <!-- SMS Manager Start -->
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
-    <uses-permission android:name="android.permission.WRITE_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_MMS" />
-    <uses-permission android:name="android.permission.RECEIVE_WAP_PUSH"/>
+<!--    <uses-permission android:name="android.permission.RECEIVE_SMS" />-->
+<!--    <uses-permission android:name="android.permission.READ_SMS" />-->
+<!--    <uses-permission android:name="android.permission.SEND_SMS" />-->
+<!--    <uses-permission android:name="android.permission.WRITE_SMS" />-->
+<!--    <uses-permission android:name="android.permission.RECEIVE_MMS" />-->
+<!--    <uses-permission android:name="android.permission.RECEIVE_WAP_PUSH"/>-->
     <!-- SMS Manager End -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -40,21 +40,21 @@
             </intent-filter>
         </activity>
         <!-- SMS Manager Start -->
-        <activity
-            android:name=".myui.sms.ComposeSmsActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Transparent"
-            android:excludeFromRecents="true"
-            android:launchMode="singleTop">
-            <intent-filter>
-                <action android:name="android.intent.action.SENDTO"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:scheme="sms"/>
-                <data android:scheme="smsto"/>
-                <data android:scheme="mms" />
-                <data android:scheme="mmsto" />
-            </intent-filter>
-        </activity>
+<!--        <activity-->
+<!--            android:name=".myui.sms.ComposeSmsActivity"-->
+<!--            android:exported="true"-->
+<!--            android:theme="@style/Theme.Transparent"-->
+<!--            android:excludeFromRecents="true"-->
+<!--            android:launchMode="singleTop">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.SENDTO"/>-->
+<!--                <category android:name="android.intent.category.DEFAULT"/>-->
+<!--                <data android:scheme="sms"/>-->
+<!--                <data android:scheme="smsto"/>-->
+<!--                <data android:scheme="mms" />-->
+<!--                <data android:scheme="mmsto" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
         <!-- SMS Manager End -->
         <activity
             android:name=".myui.IncomingCallActivity"
@@ -67,41 +67,41 @@
             </intent-filter>
         </service>
         <!-- SMS Manager Start -->
-        <receiver android:name=".sms.SmsReceiver" android:exported="true"
-            android:permission="android.permission.BROADCAST_SMS">
-            <intent-filter>
-                <action android:name="android.provider.Telephony.SMS_DELIVER" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".sms.MmsReceiver"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_WAP_PUSH">
-            <intent-filter>
-                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
-                <data android:mimeType="application/vnd.wap.mms-message" />
-            </intent-filter>
-        </receiver>
-        <service
-            android:name=".sms.HeadlessSmsSendService"
-            android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE"/>
-                <data android:scheme="sms"/>
-                <data android:scheme="smsto"/>
-                <data android:scheme="mms"/>
-                <data android:scheme="mmsto"/>
-            </intent-filter>
-        </service>
-        <service
-            android:name=".sms.SmsSendService"
-            android:permission="android.permission.BROADCAST_SMS"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.SEND_SMS"/>
-            </intent-filter>
-        </service>
+<!--        <receiver android:name=".sms.SmsReceiver" android:exported="true"-->
+<!--            android:permission="android.permission.BROADCAST_SMS">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.provider.Telephony.SMS_DELIVER" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+<!--        <receiver-->
+<!--            android:name=".sms.MmsReceiver"-->
+<!--            android:exported="true"-->
+<!--            android:permission="android.permission.BROADCAST_WAP_PUSH">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />-->
+<!--                <data android:mimeType="application/vnd.wap.mms-message" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+<!--        <service-->
+<!--            android:name=".sms.HeadlessSmsSendService"-->
+<!--            android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE"/>-->
+<!--                <data android:scheme="sms"/>-->
+<!--                <data android:scheme="smsto"/>-->
+<!--                <data android:scheme="mms"/>-->
+<!--                <data android:scheme="mmsto"/>-->
+<!--            </intent-filter>-->
+<!--        </service>-->
+<!--        <service-->
+<!--            android:name=".sms.SmsSendService"-->
+<!--            android:permission="android.permission.BROADCAST_SMS"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.SEND_SMS"/>-->
+<!--            </intent-filter>-->
+<!--        </service>-->
         <!-- SMS Manager End -->
         <receiver android:name=".NotificationActionReceiver" android:exported="false">
             <intent-filter>
@@ -113,9 +113,9 @@
     </application>
     <queries>
         <!-- SMS Manager Start -->
-        <intent>
-            <action android:name="android.app.role.SMS" />
-        </intent>
+<!--        <intent>-->
+<!--            <action android:name="android.app.role.SMS" />-->
+<!--        </intent>-->
         <!-- SMS Manager End -->
         <package android:name="com.zoiper.android.app" />
         <package android:name="com.tailscale.ipn" />
