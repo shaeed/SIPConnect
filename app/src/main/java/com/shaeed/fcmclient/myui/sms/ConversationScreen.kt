@@ -86,7 +86,7 @@ fun ConversationScreen(
 
     val contactViewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(LocalContext.current))
     val phonebook by contactViewModel.phonebook.collectAsState()
-    val contactName = phonebook[senderNormalized] ?: sender
+    val resolvedName = phonebook[senderNormalized]
 
     // Mark all messages as read
     LaunchedEffect(senderNormalized) { viewModel.markAsRead(senderNormalized) }
@@ -144,7 +144,18 @@ fun ConversationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(contactName) },
+                title = {
+                    Column {
+                        Text(resolvedName ?: sender)
+                        if (resolvedName != null) {
+                            Text(
+                                text = sender,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
