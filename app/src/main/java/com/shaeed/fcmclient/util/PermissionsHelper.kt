@@ -1,6 +1,7 @@
 package com.shaeed.fcmclient.util
 
 import android.Manifest
+import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -22,6 +23,14 @@ object PermissionsHelper {
         // SMS Manager End
         Manifest.permission.READ_CONTACTS,
     )
+
+    fun canUseFullScreenIntent(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            context.getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
+        } else {
+            true
+        }
+    }
 
     fun allGranted(context: Context): Boolean {
         return REQUIRED_PERMISSIONS.all {
