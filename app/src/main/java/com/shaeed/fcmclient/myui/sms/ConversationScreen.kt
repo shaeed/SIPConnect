@@ -3,6 +3,9 @@ package com.shaeed.fcmclient.myui.sms
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.text.SpannableString
+import android.text.style.URLSpan
+import android.text.util.Linkify
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -26,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.SmsFailed
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,13 +46,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -148,7 +156,8 @@ fun ConversationScreen(
         Column(
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
-            var showDeleteDialog by remember { mutableStateOf<Pair<Boolean, Long?>>(false to null) }
+            val context = LocalContext.current
+            var selectedMessage by remember { mutableStateOf<MessageEntity?>(null) }
             LazyColumn(
                 state = listState,
                 modifier = Modifier.weight(1f),
@@ -162,7 +171,7 @@ fun ConversationScreen(
                     messages[idx]?.let { msg ->
                         MessageBubble(
                             message = msg,
-                            onLongPress = { showDeleteDialog = true to msg.id }
+                            onLongPress = { selectedMessage = it }
                         )
                         Spacer(Modifier.height(4.dp))
                     }
@@ -203,22 +212,26 @@ fun ConversationScreen(
                 }
             }
 
-            if (showDeleteDialog.first) {
+            selectedMessage?.let { msg ->
                 AlertDialog(
-                    onDismissRequest = { showDeleteDialog = false to null },
-                    title = { Text("Delete Message") },
-                    text = { Text("Are you sure you want to delete this message?") },
+                    onDismissRequest = { selectedMessage = null },
+                    title = { Text("Message Options") },
+                    text = { Text(msg.body, style = MaterialTheme.typography.bodySmall) },
                     confirmButton = {
                         TextButton(onClick = {
-                            showDeleteDialog.second?.let { id ->
-                                viewModel.deleteMessage(id)
-                            }
-                            showDeleteDialog = false to null
+                            viewModel.deleteMessage(msg.id)
+                            selectedMessage = null
                         }) { Text("Delete") }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showDeleteDialog = false to null }) {
-                            Text("Cancel")
+                        Row {
+                            TextButton(onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText("SMS Message", msg.body))
+                                Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                                selectedMessage = null
+                            }) { Text("Copy") }
+                            TextButton(onClick = { selectedMessage = null }) { Text("Cancel") }
                         }
                     }
                 )
@@ -248,8 +261,8 @@ fun MessageBubble(
         MaterialTheme.colorScheme.surfaceVariant
     val alignment = if (isOutgoing) Alignment.End else Alignment.Start
 
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val linkColor = if (isOutgoing) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+    val annotatedBody = remember(message.body, linkColor) { linkifyText(message.body, linkColor) }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -258,14 +271,7 @@ fun MessageBubble(
         Box(
             modifier = Modifier
                 .combinedClickable(
-                    onClick = {
-                        coroutineScope.launch {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            val clip = ClipData.newPlainText("SMS Message", message.body)
-                            clipboard.setPrimaryClip(clip)
-                            Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
-                        }
-                    },
+                    onClick = {},
                     onLongClick = { onLongPress(message) }
                 )
                 .background(
@@ -276,7 +282,7 @@ fun MessageBubble(
                 .widthIn(max = 300.dp)
         ) {
             Text(
-                text = message.body,
+                text = annotatedBody,
                 color = if (isOutgoing) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = if (!message.read) FontWeight.Bold else FontWeight.Normal
             )
@@ -350,5 +356,15 @@ fun MessageBubble(
                 )
             }
         }
+    }
+}
+
+fun linkifyText(text: String, linkColor: Color) = buildAnnotatedString {
+    append(text)
+    val spannable = SpannableString(text)
+    Linkify.addLinks(spannable, Linkify.WEB_URLS or Linkify.PHONE_NUMBERS)
+    val style = TextLinkStyles(SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline))
+    for (span in spannable.getSpans(0, spannable.length, URLSpan::class.java)) {
+        addLink(LinkAnnotation.Url(span.url, style), spannable.getSpanStart(span), spannable.getSpanEnd(span))
     }
 }
