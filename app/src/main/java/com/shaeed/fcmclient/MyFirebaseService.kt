@@ -20,6 +20,7 @@ import com.shaeed.fcmclient.util.UtilFunctions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 class MyFirebaseService : FirebaseMessagingService() {
@@ -130,7 +131,6 @@ class MyFirebaseService : FirebaseMessagingService() {
         val isOutgoingGsm = data["forward_to_gsm"]?.toBoolean() ?: false
         val timestamp = UtilFunctions.isoToMillis(data["timestamp"] ?: "unknown")
         val fromNormalized = ContactHelper.normalizeNumber(from)
-        val notificationId = fromNormalized.hashCode()
 
         if(isOutgoingGsm) {
             if (SharedPreferences.getKeyValue(applicationContext, PrefKeys.APP_MODE) == AppMode.SERVER){
@@ -147,6 +147,7 @@ class MyFirebaseService : FirebaseMessagingService() {
 
         CoroutineScope(Dispatchers.IO).launch {
             val messageId = SmsRepository.insertFirebaseMessage(applicationContext, from, body, timestamp)
+            val notificationId = messageId.toInt()
             val contactName = ContactHelper.getContactName(applicationContext, from)
             val otp = UtilFunctions.extractOtp(body)
             val collapsedText = if (otp != null) "OTP: ${UtilFunctions.formatOtp(otp)}" else body
