@@ -107,6 +107,7 @@
             <intent-filter>
                 <action android:name="com.shaeed.fcmclient.ACTION_SMS_DELETE" />
                 <action android:name="com.shaeed.fcmclient.ACTION_SMS_MARK_READ" />
+                <action android:name="com.shaeed.fcmclient.ACTION_DISMISS_CALL" />
             </intent-filter>
         </receiver>
     </application>
