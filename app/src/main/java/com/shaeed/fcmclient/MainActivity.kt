@@ -113,6 +113,6 @@ fun createNotificationChannels(context: Context) {
 }
 
 object GlobalConfig {
-    var compileMode: String = AppMode.SMS_MANAGER // AppMode.NORMAL // AppMode.SMS_MANAGER
+    var compileMode: String = AppMode.NORMAL // AppMode.NORMAL // AppMode.SMS_MANAGER
     // var appMode: String = AppMode.NORMAL
 }
