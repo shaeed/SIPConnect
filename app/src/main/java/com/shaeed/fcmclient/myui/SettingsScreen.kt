@@ -3,6 +3,10 @@ package com.shaeed.fcmclient.myui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,12 +38,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,6 +58,7 @@ import androidx.navigation.NavController
 import com.google.firebase.messaging.FirebaseMessaging
 import com.shaeed.fcmclient.GlobalConfig
 import com.shaeed.fcmclient.data.AppMode
+import com.shaeed.fcmclient.util.PermissionsHelper
 import com.shaeed.fcmclient.network.RetrofitClient
 import com.shaeed.fcmclient.data.PrefKeys
 import com.shaeed.fcmclient.data.SharedPreferences
@@ -66,6 +75,20 @@ fun SettingsScreen(navController: NavController) {
     var serverResponse by remember { mutableStateOf("") }
     val context = LocalContext.current
     val rememberCoroutineScope = rememberCoroutineScope()
+
+    var fullScreenIntentGranted by remember {
+        mutableStateOf(PermissionsHelper.canUseFullScreenIntent(context))
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                fullScreenIntentGranted = PermissionsHelper.canUseFullScreenIntent(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO){ checkAndReregister(context) }
@@ -95,6 +118,42 @@ fun SettingsScreen(navController: NavController) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (!fullScreenIntentGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            "Auto-open ZoIPer on Calls",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Android 14+ requires explicit permission to automatically open ZoIPer " +
+                                "when a call arrives. Without it, you must tap the notification manually.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = {
+                            val intent = Intent(
+                                Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                                Uri.parse("package:${context.packageName}")
+                            )
+                            context.startActivity(intent)
+                        }) {
+                            Text("Grant Permission")
+                        }
+                    }
+                }
+            }
+
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
