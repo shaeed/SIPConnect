@@ -3,6 +3,9 @@ package com.shaeed.fcmclient.myui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,10 +22,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallMade
 import androidx.compose.material.icons.automirrored.filled.CallMissed
 import androidx.compose.material.icons.automirrored.filled.CallReceived
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -48,6 +53,7 @@ import com.shaeed.fcmclient.viewmodel.CallViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,7 +132,7 @@ fun CallLogItem(
             tint = when (call.status) {
                 "Incoming" -> MaterialTheme.colorScheme.primary
                 "Outgoing" -> MaterialTheme.colorScheme.secondary
-                "Missed" -> MaterialTheme.colorScheme.error
+                "Missed", "Rejected" -> MaterialTheme.colorScheme.error
                 else -> MaterialTheme.colorScheme.onSurface
             },
             modifier = Modifier.size(32.dp)
@@ -149,7 +155,29 @@ fun CallLogItem(
         Text(
             text = call.status,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
+            color = when (call.status) {
+                "Incoming" -> MaterialTheme.colorScheme.primary
+                "Outgoing" -> MaterialTheme.colorScheme.secondary
+                "Missed", "Rejected" -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurface
+            }
         )
+
+        IconButton(onClick = {
+            val intent = Intent(Intent.ACTION_DIAL, "tel:${call.phoneNumber}".toUri()).apply {
+                setPackage("com.zoiper.android.app")
+            }
+            if (intent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(intent)
+            } else {
+                Toast.makeText(context, "ZoiPer not installed.", Toast.LENGTH_SHORT).show()
+            }
+        }) {
+            Icon(
+                imageVector = Icons.Filled.Call,
+                contentDescription = "Call",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
