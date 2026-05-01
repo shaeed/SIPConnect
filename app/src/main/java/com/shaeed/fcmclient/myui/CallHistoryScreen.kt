@@ -119,7 +119,7 @@ fun CallLogItem(
             imageVector = when (call.status) {
                 "Incoming" -> Icons.AutoMirrored.Filled.CallReceived
                 "Outgoing" -> Icons.AutoMirrored.Filled.CallMade
-                "Missed" -> Icons.AutoMirrored.Filled.CallMissed
+                "Missed", "Rejected" -> Icons.AutoMirrored.Filled.CallMissed
                 else -> Icons.Filled.Phone
             },
             contentDescription = call.status,
