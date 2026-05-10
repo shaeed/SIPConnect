@@ -15,14 +15,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 
 object PermissionsHelper {
-    val REQUIRED_PERMISSIONS = arrayOf(
-        // SMS Manager Start
+    val REQUIRED_PERMISSIONS: Array<String> get() {
+        val base = mutableListOf(Manifest.permission.READ_CONTACTS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            base += Manifest.permission.POST_NOTIFICATIONS
+        }
+        return base.toTypedArray()
+    }
+
+    val SMS_PERMISSIONS = arrayOf(
         Manifest.permission.RECEIVE_SMS,
         Manifest.permission.SEND_SMS,
         Manifest.permission.READ_SMS,
         Manifest.permission.READ_PHONE_STATE,
-        // SMS Manager End
-        Manifest.permission.READ_CONTACTS,
     )
 
     fun canDrawOverlays(context: Context): Boolean = Settings.canDrawOverlays(context)
@@ -42,48 +47,27 @@ object PermissionsHelper {
     }
 
     @Composable
-    fun RequestAllPermissionsIfNeeded() {
+    fun RequestAllPermissionsIfNeeded(includeSms: Boolean = false) {
         val context = LocalContext.current
 
-        val multiplePermissionsLauncher = rememberLauncherForActivityResult(
+        val launcher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
             val denied = permissions.filterValues { !it }
-            if (denied.isEmpty()) {
-                Toast.makeText(context, "All permissions granted", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, "Some permissions denied: $denied", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        val notificationPermissionLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission()
-        ) { isGranted ->
-            if (isGranted) {
-                Toast.makeText(context, "Notifications enabled", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, "Notifications denied", Toast.LENGTH_SHORT).show()
+            if (denied.isNotEmpty()) {
+                Toast.makeText(context, "Some permissions denied: ${denied.keys}", Toast.LENGTH_SHORT).show()
             }
         }
 
         LaunchedEffect(Unit) {
-            // Request runtime permissions
-            val notGranted = REQUIRED_PERMISSIONS.filter {
+            val toRequest = buildList {
+                addAll(REQUIRED_PERMISSIONS)
+                if (includeSms) addAll(SMS_PERMISSIONS)
+            }.filter {
                 ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
             }
-            if (notGranted.isNotEmpty()) {
-                multiplePermissionsLauncher.launch(notGranted.toTypedArray())
-            }
-
-            // Request notification permission for Android 13+
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.POST_NOTIFICATIONS
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
+            if (toRequest.isNotEmpty()) {
+                launcher.launch(toRequest.toTypedArray())
             }
         }
     }
