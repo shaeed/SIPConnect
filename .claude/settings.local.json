@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git fetch *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(./gradlew test *)",
+      "Bash(./gradlew testDebugUnitTest --info)",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(./gradlew compileDebugAndroidTestKotlin)",
+      "Bash(Get-ChildItem -Recurse app/src/androidTest/java/com/shaeed/fcmclient/)",
+      "Bash(Select-Object FullName)"
+    ]
+  }
+}
