@@ -11,7 +11,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
-import androidx.core.app.ActivityCompat
 import androidx.navigation.compose.rememberNavController
 import com.shaeed.fcmclient.data.AppMode
 import com.shaeed.fcmclient.myui.MainScreen
@@ -30,12 +29,18 @@ class MainActivity : ComponentActivity() {
             DefaultSmsHelper.requestDefaultSmsApp(this)
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && GlobalConfig.compileMode == AppMode.SMS_MANAGER) {
+            val roleManager = getSystemService(RoleManager::class.java)
+            if (!roleManager.isRoleHeld(RoleManager.ROLE_SMS)) {
+                startActivity(roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS))
+            }
+        }
+
         setContent {
             SIPConnectTheme {
                 val navController = rememberNavController()
                 val destination = intent?.getStringExtra("destination")
 
-                // Do the navigation only once when the Composable is launched
                 LaunchedEffect(destination) {
                     if (destination != null) {
                         navController.navigate(destination)
@@ -43,15 +48,8 @@ class MainActivity : ComponentActivity() {
                 }
                 MainScreen(navController)
             }
-            PermissionsHelper.RequestAllPermissionsIfNeeded()
-            ActivityCompat.requestPermissions(this, PermissionsHelper.REQUIRED_PERMISSIONS, 1)
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && GlobalConfig.compileMode == AppMode.SMS_MANAGER) {
-                val roleManager = getSystemService(RoleManager::class.java)
-                if (!roleManager.isRoleHeld(RoleManager.ROLE_SMS)) {
-                    startActivity(roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS))
-                }
-            }
+            val includeSms = GlobalConfig.compileMode == AppMode.SMS_MANAGER
+            PermissionsHelper.RequestAllPermissionsIfNeeded(includeSms = includeSms)
         }
     }
 
