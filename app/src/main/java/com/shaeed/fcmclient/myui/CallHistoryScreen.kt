@@ -44,6 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import com.shaeed.fcmclient.viewmodel.CallViewModelFactory
 import androidx.navigation.NavController
 import com.shaeed.fcmclient.viewmodel.ContactViewModel
 import com.shaeed.fcmclient.viewmodel.ContactViewModelFactory
@@ -57,7 +59,7 @@ import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CallHistoryScreen(navController: NavController, callViewModel: CallViewModel = viewModel()) {
+fun CallHistoryScreen(navController: NavController, callViewModel: CallViewModel = viewModel(factory = CallViewModelFactory(LocalContext.current))) {
     val context = LocalContext.current
     val callLogs by callViewModel.callLogs.collectAsState()
     val contactViewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(context))

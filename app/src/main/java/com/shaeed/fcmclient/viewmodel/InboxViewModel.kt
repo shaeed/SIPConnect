@@ -1,17 +1,15 @@
 package com.shaeed.fcmclient.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.shaeed.fcmclient.data.AppDatabase
+import com.shaeed.fcmclient.data.MessageRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class InboxViewModel(app: Application) : AndroidViewModel(app) {
-    private val dao = AppDatabase.getDatabase(app).messageDao()
+class InboxViewModel(private val repository: MessageRepository) : ViewModel() {
 
-    val conversations = dao.getConversationList().stateIn(
+    val conversations = repository.getConversationList().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
         emptyList()
@@ -19,7 +17,7 @@ class InboxViewModel(app: Application) : AndroidViewModel(app) {
 
     fun deleteMessages(senderNormalized: String) {
         viewModelScope.launch {
-            dao.deleteMessages(senderNormalized)
+            repository.deleteMessages(senderNormalized)
         }
     }
 }

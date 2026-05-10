@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.shaeed.fcmclient.viewmodel.InboxViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import com.shaeed.fcmclient.viewmodel.InboxViewModelFactory
 import com.shaeed.fcmclient.data.MessageEntity
 import com.shaeed.fcmclient.util.UtilFunctions.formatTimestamp
 import com.shaeed.fcmclient.viewmodel.ContactViewModel
@@ -53,7 +55,7 @@ import com.shaeed.fcmclient.viewmodel.ContactViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InboxScreen(navController: NavController, viewModel: InboxViewModel = viewModel()) {
+fun InboxScreen(navController: NavController, viewModel: InboxViewModel = viewModel(factory = InboxViewModelFactory(LocalContext.current))) {
     val conversations by viewModel.conversations.collectAsState()
     val contactViewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(LocalContext.current))
 
