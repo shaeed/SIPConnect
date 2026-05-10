@@ -5,8 +5,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -65,7 +63,6 @@ class MainActivity : ComponentActivity() {
 
 fun createNotificationChannels(context: Context) {
     val nm = context.getSystemService(NotificationManager::class.java)
-    val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
 
     val channel = NotificationChannel(
         "incoming_call_channel",
@@ -75,12 +72,7 @@ fun createNotificationChannels(context: Context) {
         description = "Channel for incoming VoIP calls"
         enableLights(true)
         enableVibration(true)
-        setSound(ringtoneUri,
-            AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-        )
+        setSound(null, null)
         lockscreenVisibility = Notification.VISIBILITY_PUBLIC
     }
     nm.createNotificationChannel(channel)
