@@ -79,11 +79,15 @@ fun SettingsScreen(navController: NavController) {
     var fullScreenIntentGranted by remember {
         mutableStateOf(PermissionsHelper.canUseFullScreenIntent(context))
     }
+    var drawOverlaysGranted by remember {
+        mutableStateOf(PermissionsHelper.canDrawOverlays(context))
+    }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 fullScreenIntentGranted = PermissionsHelper.canUseFullScreenIntent(context)
+                drawOverlaysGranted = PermissionsHelper.canDrawOverlays(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -118,6 +122,44 @@ fun SettingsScreen(navController: NavController) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (!drawOverlaysGranted) {
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            "Auto-open ZoIPer on Calls (Screen On)",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "\"Display over other apps\" permission is required to automatically " +
+                                "open ZoIPer when a call arrives and your screen is on. " +
+                                "Without it, you must tap the notification manually.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = {
+                            context.startActivity(
+                                Intent(
+                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:${context.packageName}")
+                                )
+                            )
+                        }) {
+                            Text("Grant Permission")
+                        }
+                    }
+                }
+            }
+
             if (!fullScreenIntentGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 Card(
                     shape = RoundedCornerShape(12.dp),

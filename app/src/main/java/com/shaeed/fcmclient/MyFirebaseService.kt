@@ -4,6 +4,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -45,11 +46,11 @@ class MyFirebaseService : FirebaseMessagingService() {
     }
 
     private fun showNotification(title: String?, body: String?) {
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         val notification = NotificationCompat.Builder(this, "default_channel_id")
             .setContentTitle(title)
             .setContentText(body)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // replace with your icon
+            .setSmallIcon(R.drawable.ic_launcher_foreground) // replace with app icon
             .setAutoCancel(true)
             .build()
 
@@ -65,17 +66,32 @@ class MyFirebaseService : FirebaseMessagingService() {
         val from = data["phone_number"] ?: "Unknown"
         Log.d("MyFirebaseService", "Incoming call from: $from")
 
-        val intent = Intent(this, IncomingCallActivity::class.java).apply {
-            putExtra("from", from)
-            putExtra("timestamp", data["timestamp"])
+        if (Settings.canDrawOverlays(this)) {
+            // SYSTEM_ALERT_WINDOW exempts background activity launches on all OEMs.
+            // IncomingCallActivity sets setShowWhenLocked + setTurnScreenOn, so this
+            // works correctly whether the screen is on or off.
+            startActivity(Intent(this, IncomingCallActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                putExtra("from", from)
+                putExtra("timestamp", data["timestamp"])
+            })
+            return
         }
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
 
+        // SYSTEM_ALERT_WINDOW not granted: use a full-screen notification as fallback.
         val contactName = runBlocking {
             ContactHelper.getContactName(applicationContext, from)
         }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0,
+            Intent(this, IncomingCallActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                putExtra("from", from)
+                putExtra("timestamp", data["timestamp"])
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         val dismissIntent = Intent(this, NotificationActionReceiver::class.java).apply {
             action = NotificationActionReceiver.ACTION_DISMISS_CALL
@@ -96,6 +112,8 @@ class MyFirebaseService : FirebaseMessagingService() {
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setContentIntent(pendingIntent)
             .setFullScreenIntent(pendingIntent, true)
+            .setSound(null)
+            .setDefaults(0)
             .setAutoCancel(true)
             .setOngoing(true)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
