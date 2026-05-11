@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -133,6 +134,7 @@ fun MainScreen(navController: NavHostController) {
     val navItems = listOf(
         NavItem("Call History", "callHistory", Icons.Default.History),
         NavItem("Inbox", "inbox", Icons.AutoMirrored.Filled.Message),
+        NavItem("Server Logs", "serverLogs", Icons.Default.Storage),
         NavItem("Settings", "settings", Icons.Default.Settings)
     )
 
@@ -184,6 +186,7 @@ fun MainScreen(navController: NavHostController) {
                 val sender = backStackEntry.arguments?.getString("contact")!!
                 ConversationScreen(navController, senderNormalized, sender)
             }
+            composable("serverLogs") { ServerLogsScreen(navController) }
             composable("about") { AboutScreen(navController) }
         }
     }

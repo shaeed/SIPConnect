@@ -8,3 +8,22 @@ data class PostResponse(val message: String)
 data class RestartSip(val device_id: String, val username: String)
 
 data class TokenResponse(val fcm_token: String)
+
+data class ServerSmsLog(
+    val id: Int,
+    val user: String,
+    val number: String,
+    val message: String,
+    val sms_type: String,
+    val timestamp: String
+)
+
+data class ServerCallLog(
+    val id: Int,
+    val user: String,
+    val number: String,
+    val timestamp: String
+)
+
+data class ServerSmsLogsResponse(val data: List<ServerSmsLog>)
+data class ServerCallLogsResponse(val data: List<ServerCallLog>)

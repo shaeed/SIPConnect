@@ -23,4 +23,10 @@ interface ApiService {
 
     @GET()
     suspend fun getTokenFromServer(@Url url: String, @QueryMap options: Map<String, String>): Response<TokenResponse>
+
+    @GET()
+    suspend fun getSmsLogs(@Url url: String): Response<ServerSmsLogsResponse>
+
+    @GET()
+    suspend fun getCallLogs(@Url url: String): Response<ServerCallLogsResponse>
 }
