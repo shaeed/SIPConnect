@@ -129,6 +129,38 @@ object RetrofitClient {
         return handleRetrofitCall(url, request, apiService::restartSip)
     }
 
+    suspend fun getSmsLogs(context: Context): List<ServerSmsLog> {
+        val (_, server, _) = getCommonParams(context)
+        val url = "http://$server/api/logs/sms"
+        return try {
+            val response = apiService.getSmsLogs(url)
+            if (response.isSuccessful) response.body()?.data ?: emptyList()
+            else {
+                Log.e("RetrofitClient", "getSmsLogs error ${response.code()}")
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e("RetrofitClient", "getSmsLogs network error", e)
+            emptyList()
+        }
+    }
+
+    suspend fun getCallLogs(context: Context): List<ServerCallLog> {
+        val (_, server, _) = getCommonParams(context)
+        val url = "http://$server/api/logs/call"
+        return try {
+            val response = apiService.getCallLogs(url)
+            if (response.isSuccessful) response.body()?.data ?: emptyList()
+            else {
+                Log.e("RetrofitClient", "getCallLogs error ${response.code()}")
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e("RetrofitClient", "getCallLogs network error", e)
+            emptyList()
+        }
+    }
+
     suspend fun getTokenFromServer(context: Context): String? {
         val (deviceId, server, username) = getCommonParams(context)
         val url = "http://$server/sip/client/token"
