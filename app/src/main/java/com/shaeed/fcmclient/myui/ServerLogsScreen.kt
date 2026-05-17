@@ -89,11 +89,9 @@ private fun copyToClipboard(context: Context, label: String, text: String) {
     Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
 }
 
-private data class GroupedServerCallLog(
+private data class ServerCallDetail(
     val normalizedNumber: String,
     val displayNumber: String,
-    val count: Int,
-    val latestTimestamp: String,
     val calls: List<ServerCallLog>
 )
 
@@ -237,25 +235,15 @@ private fun SmsLogItem(log: ServerSmsLog, contactViewModel: ContactViewModel) {
 @Composable
 private fun CallLogsList(logs: List<ServerCallLog>, contactViewModel: ContactViewModel) {
     val context = LocalContext.current
-    var selectedGroup by remember { mutableStateOf<GroupedServerCallLog?>(null) }
+    var detailState by remember { mutableStateOf<ServerCallDetail?>(null) }
     val sheetState = rememberModalBottomSheetState()
 
-    val grouped = remember(logs) {
+    // Precompute per-number groups so each item can show count and all calls on tap
+    val callsByNumber = remember(logs) {
         logs.groupBy { ContactHelper.normalizeNumber(it.number) }
-            .map { (normalizedNumber, entries) ->
-                val sorted = entries.sortedByDescending { it.timestamp }
-                GroupedServerCallLog(
-                    normalizedNumber = normalizedNumber,
-                    displayNumber = sorted.first().number,
-                    count = sorted.size,
-                    latestTimestamp = sorted.first().timestamp,
-                    calls = sorted
-                )
-            }
-            .sortedByDescending { it.latestTimestamp }
     }
 
-    if (grouped.isEmpty()) {
+    if (logs.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No call logs", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -269,18 +257,31 @@ private fun CallLogsList(logs: List<ServerCallLog>, contactViewModel: ContactVie
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item { Spacer(Modifier.height(4.dp)) }
-        items(grouped, key = { it.normalizedNumber }) { group ->
-            GroupedServerCallLogItem(group, contactViewModel, onTap = { selectedGroup = group })
+        items(logs) { log ->
+            val normalizedNumber = ContactHelper.normalizeNumber(log.number)
+            val allCalls = callsByNumber[normalizedNumber] ?: listOf(log)
+            ServerCallLogItem(
+                log = log,
+                count = allCalls.size,
+                contactViewModel = contactViewModel,
+                onTap = {
+                    detailState = ServerCallDetail(
+                        normalizedNumber = normalizedNumber,
+                        displayNumber = log.number,
+                        calls = allCalls.sortedByDescending { it.timestamp }
+                    )
+                }
+            )
         }
         item { Spacer(Modifier.height(4.dp)) }
     }
 
-    selectedGroup?.let { group ->
+    detailState?.let { detail ->
         val phonebook by contactViewModel.phonebook.collectAsState()
-        val contactName = phonebook[group.normalizedNumber]
+        val contactName = phonebook[detail.normalizedNumber]
 
         ModalBottomSheet(
-            onDismissRequest = { selectedGroup = null },
+            onDismissRequest = { detailState = null },
             sheetState = sheetState
         ) {
             Column(
@@ -297,17 +298,17 @@ private fun CallLogsList(logs: List<ServerCallLog>, contactViewModel: ContactVie
                     Column(Modifier.weight(1f)) {
                         if (contactName != null) {
                             Text(contactName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                            Text(group.displayNumber, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(detail.displayNumber, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         } else {
-                            Text(group.displayNumber, style = MaterialTheme.typography.titleLarge)
+                            Text(detail.displayNumber, style = MaterialTheme.typography.titleLarge)
                         }
                     }
-                    IconButton(onClick = { copyToClipboard(context, "Number", group.displayNumber) }) {
+                    IconButton(onClick = { copyToClipboard(context, "Number", detail.displayNumber) }) {
                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy number", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 Text(
-                    text = "${group.count} call${if (group.count > 1) "s" else ""}",
+                    text = "${detail.calls.size} call${if (detail.calls.size > 1) "s" else ""}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -315,7 +316,7 @@ private fun CallLogsList(logs: List<ServerCallLog>, contactViewModel: ContactVie
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(8.dp))
 
-                group.calls.forEach { call ->
+                detail.calls.forEach { call ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -347,16 +348,16 @@ private fun CallLogsList(logs: List<ServerCallLog>, contactViewModel: ContactVie
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GroupedServerCallLogItem(
-    group: GroupedServerCallLog,
+private fun ServerCallLogItem(
+    log: ServerCallLog,
+    count: Int,
     contactViewModel: ContactViewModel,
     onTap: () -> Unit
 ) {
     val context = LocalContext.current
     val phonebook by contactViewModel.phonebook.collectAsState()
-    val contactName = phonebook[group.normalizedNumber]
+    val contactName = phonebook[ContactHelper.normalizeNumber(log.number)]
 
     Card(
         shape = RoundedCornerShape(10.dp),
@@ -371,8 +372,8 @@ private fun GroupedServerCallLogItem(
         ) {
             BadgedBox(
                 badge = {
-                    if (group.count > 1) {
-                        Badge { Text(group.count.toString()) }
+                    if (count > 1) {
+                        Badge { Text(count.toString()) }
                     }
                 }
             ) {
@@ -382,22 +383,22 @@ private fun GroupedServerCallLogItem(
             Column(Modifier.weight(1f)) {
                 if (contactName != null) {
                     Text(contactName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
-                    Text(group.displayNumber, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(log.number, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
-                    Text(group.displayNumber, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                    Text(log.number, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
                 }
                 Text(
-                    "User: ${group.calls.first().user}",
+                    "User: ${log.user}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    formatTimestamp(group.latestTimestamp),
+                    formatTimestamp(log.timestamp),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(onClick = { copyToClipboard(context, "Number", group.displayNumber) }) {
+            IconButton(onClick = { copyToClipboard(context, "Number", log.number) }) {
                 Icon(
                     Icons.Default.ContentCopy,
                     contentDescription = "Copy number",

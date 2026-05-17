@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.shaeed.fcmclient.data.CallLog
 import com.shaeed.fcmclient.data.GroupedCallLog
 import com.shaeed.fcmclient.util.UtilFunctions.formatTimestamp
 import com.shaeed.fcmclient.viewmodel.CallViewModel
@@ -72,11 +73,16 @@ fun CallHistoryScreen(
     callViewModel: CallViewModel = viewModel(factory = CallViewModelFactory(LocalContext.current))
 ) {
     val context = LocalContext.current
-    val groupedCallLogs by callViewModel.groupedCallLogs.collectAsState()
+    val callLogs by callViewModel.callLogs.collectAsState()
     val contactViewModel: ContactViewModel = viewModel(factory = ContactViewModelFactory(context))
     val snackbarHostState = remember { SnackbarHostState() }
-    var selectedGroup by remember { mutableStateOf<GroupedCallLog?>(null) }
+    var detailState by remember { mutableStateOf<GroupedCallLog?>(null) }
     val sheetState = rememberModalBottomSheetState()
+
+    // Precompute per-number groups so each item can show total count and all calls on tap
+    val callsByNumber = remember(callLogs) {
+        callLogs.groupBy { it.normalizedNumber }
+    }
 
     LaunchedEffect(Unit) {
         callViewModel.deleteOldCallLogs()
@@ -92,11 +98,22 @@ fun CallHistoryScreen(
             contentPadding = innerPadding,
             modifier = Modifier.fillMaxSize()
         ) {
-            items(groupedCallLogs, key = { it.normalizedNumber }) { group ->
-                GroupedCallLogItem(
-                    group = group,
+            items(callLogs) { log ->
+                val allCalls = callsByNumber[log.normalizedNumber] ?: listOf(log)
+                CallLogItem(
+                    call = log,
+                    count = allCalls.size,
                     viewModel = contactViewModel,
-                    onTap = { selectedGroup = group }
+                    onTap = {
+                        detailState = GroupedCallLog(
+                            normalizedNumber = log.normalizedNumber,
+                            phoneNumber = log.phoneNumber,
+                            count = allCalls.size,
+                            latestTimestamp = allCalls.maxOf { it.timestamp },
+                            latestStatus = allCalls.maxByOrNull { it.timestamp }?.status ?: log.status,
+                            calls = allCalls.sortedByDescending { it.timestamp }
+                        )
+                    }
                 )
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -107,12 +124,12 @@ fun CallHistoryScreen(
         }
     }
 
-    selectedGroup?.let { group ->
+    detailState?.let { group ->
         val phonebook by contactViewModel.phonebook.collectAsState()
         val contactName = phonebook[group.normalizedNumber] ?: group.phoneNumber
 
         ModalBottomSheet(
-            onDismissRequest = { selectedGroup = null },
+            onDismissRequest = { detailState = null },
             sheetState = sheetState
         ) {
             Column(
@@ -208,16 +225,16 @@ fun CallHistoryScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GroupedCallLogItem(
-    group: GroupedCallLog,
+fun CallLogItem(
+    call: CallLog,
+    count: Int,
     viewModel: ContactViewModel,
     onTap: () -> Unit
 ) {
     val context = LocalContext.current
     val phonebook by viewModel.phonebook.collectAsState()
-    val contactName = phonebook[group.normalizedNumber] ?: group.phoneNumber
+    val contactName = phonebook[call.normalizedNumber] ?: call.phoneNumber
 
     Row(
         modifier = Modifier
@@ -228,20 +245,20 @@ fun GroupedCallLogItem(
     ) {
         BadgedBox(
             badge = {
-                if (group.count > 1) {
-                    Badge { Text(group.count.toString()) }
+                if (count > 1) {
+                    Badge { Text(count.toString()) }
                 }
             }
         ) {
             Icon(
-                imageVector = when (group.latestStatus) {
+                imageVector = when (call.status) {
                     "Incoming" -> Icons.AutoMirrored.Filled.CallReceived
                     "Outgoing" -> Icons.AutoMirrored.Filled.CallMade
                     "Missed", "Rejected" -> Icons.AutoMirrored.Filled.CallMissed
                     else -> Icons.Filled.Phone
                 },
-                contentDescription = group.latestStatus,
-                tint = when (group.latestStatus) {
+                contentDescription = call.status,
+                tint = when (call.status) {
                     "Incoming" -> MaterialTheme.colorScheme.primary
                     "Outgoing" -> MaterialTheme.colorScheme.secondary
                     "Missed", "Rejected" -> MaterialTheme.colorScheme.error
@@ -259,16 +276,16 @@ fun GroupedCallLogItem(
                 maxLines = 1
             )
             Text(
-                text = formatTimestamp(group.latestTimestamp),
+                text = formatTimestamp(call.timestamp),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
         Text(
-            text = group.latestStatus,
+            text = call.status,
             style = MaterialTheme.typography.bodyMedium,
-            color = when (group.latestStatus) {
+            color = when (call.status) {
                 "Incoming" -> MaterialTheme.colorScheme.primary
                 "Outgoing" -> MaterialTheme.colorScheme.secondary
                 "Missed", "Rejected" -> MaterialTheme.colorScheme.error
@@ -277,7 +294,7 @@ fun GroupedCallLogItem(
         )
 
         IconButton(onClick = {
-            val intent = Intent(Intent.ACTION_DIAL, "tel:${group.phoneNumber}".toUri()).apply {
+            val intent = Intent(Intent.ACTION_DIAL, "tel:${call.phoneNumber}".toUri()).apply {
                 setPackage("com.zoiper.android.app")
             }
             if (intent.resolveActivity(context.packageManager) != null) {
