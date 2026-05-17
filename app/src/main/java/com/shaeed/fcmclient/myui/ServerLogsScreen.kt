@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,27 +14,35 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -79,6 +88,14 @@ private fun copyToClipboard(context: Context, label: String, text: String) {
     clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
     Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
 }
+
+private data class GroupedServerCallLog(
+    val normalizedNumber: String,
+    val displayNumber: String,
+    val count: Int,
+    val latestTimestamp: String,
+    val calls: List<ServerCallLog>
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -216,14 +233,35 @@ private fun SmsLogItem(log: ServerSmsLog, contactViewModel: ContactViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CallLogsList(logs: List<ServerCallLog>, contactViewModel: ContactViewModel) {
-    if (logs.isEmpty()) {
+    val context = LocalContext.current
+    var selectedGroup by remember { mutableStateOf<GroupedServerCallLog?>(null) }
+    val sheetState = rememberModalBottomSheetState()
+
+    val grouped = remember(logs) {
+        logs.groupBy { ContactHelper.normalizeNumber(it.number) }
+            .map { (normalizedNumber, entries) ->
+                val sorted = entries.sortedByDescending { it.timestamp }
+                GroupedServerCallLog(
+                    normalizedNumber = normalizedNumber,
+                    displayNumber = sorted.first().number,
+                    count = sorted.size,
+                    latestTimestamp = sorted.first().timestamp,
+                    calls = sorted
+                )
+            }
+            .sortedByDescending { it.latestTimestamp }
+    }
+
+    if (grouped.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No call logs", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         return
     }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -231,47 +269,135 @@ private fun CallLogsList(logs: List<ServerCallLog>, contactViewModel: ContactVie
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item { Spacer(Modifier.height(4.dp)) }
-        items(logs) { log -> CallLogItem(log, contactViewModel) }
+        items(grouped, key = { it.normalizedNumber }) { group ->
+            GroupedServerCallLogItem(group, contactViewModel, onTap = { selectedGroup = group })
+        }
         item { Spacer(Modifier.height(4.dp)) }
+    }
+
+    selectedGroup?.let { group ->
+        val phonebook by contactViewModel.phonebook.collectAsState()
+        val contactName = phonebook[group.normalizedNumber]
+
+        ModalBottomSheet(
+            onDismissRequest = { selectedGroup = null },
+            sheetState = sheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 32.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        if (contactName != null) {
+                            Text(contactName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                            Text(group.displayNumber, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        } else {
+                            Text(group.displayNumber, style = MaterialTheme.typography.titleLarge)
+                        }
+                    }
+                    IconButton(onClick = { copyToClipboard(context, "Number", group.displayNumber) }) {
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy number", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Text(
+                    text = "${group.count} call${if (group.count > 1) "s" else ""}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+
+                group.calls.forEach { call ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Call,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                formatTimestamp(call.timestamp),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                "User: ${call.user}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CallLogItem(log: ServerCallLog, contactViewModel: ContactViewModel) {
+private fun GroupedServerCallLogItem(
+    group: GroupedServerCallLog,
+    contactViewModel: ContactViewModel,
+    onTap: () -> Unit
+) {
     val context = LocalContext.current
     val phonebook by contactViewModel.phonebook.collectAsState()
-    val contactName = phonebook[ContactHelper.normalizeNumber(log.number)]
+    val contactName = phonebook[group.normalizedNumber]
 
     Card(
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onTap)
     ) {
         Row(
             Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Call, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            BadgedBox(
+                badge = {
+                    if (group.count > 1) {
+                        Badge { Text(group.count.toString()) }
+                    }
+                }
+            ) {
+                Icon(Icons.Default.Call, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            }
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 if (contactName != null) {
                     Text(contactName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
-                    Text(log.number, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(group.displayNumber, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
-                    Text(log.number, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                    Text(group.displayNumber, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
                 }
                 Text(
-                    "User: ${log.user}",
+                    "User: ${group.calls.first().user}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    formatTimestamp(log.timestamp),
+                    formatTimestamp(group.latestTimestamp),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(onClick = { copyToClipboard(context, "Number", log.number) }) {
+            IconButton(onClick = { copyToClipboard(context, "Number", group.displayNumber) }) {
                 Icon(
                     Icons.Default.ContentCopy,
                     contentDescription = "Copy number",
